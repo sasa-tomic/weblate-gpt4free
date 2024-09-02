@@ -1,0 +1,11 @@
+weblate:
+  api_url: https://hosted.weblate.org/api/
+  project: f-droid
+  target_language: sr
+  api_key: <key>
+
+gpt:
+  prompt: "You are a professional translator from English to FIXME. Translate the entire text and keep exactly the same formatting as in the input text. If there are any special characters or punctuation marks, keep them in the same place in the output text as in the input file, and do not add new characters. Mark the beginning of the translation with a line that only has __BEGIN__, and the end of the translation with a similar line that only has __END__. If you are not 100% sure how to translate, just write __EMPTY__. {}. Here is the input text that needs to be translated"
+  prompt_extension_previous_translation: "This is an earlier translation of the text, take it as a starting point"
+  prompt_extension_flags_max_length: "Shorten the translation so that it is less than max-length characters"
+  api_key: <openai-api-key>
