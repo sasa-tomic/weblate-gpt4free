@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "weblate-gpt4free"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+license = "APACHE 2.0"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+requests = "^2.32.3"
+pyyaml = "^6.0.2"
+curl-cffi = "^0.7.1"
+nodriver = "^0.36"
+g4f = { extras = ["all"], version = "^0.3.2.5" }
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.6.3"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
