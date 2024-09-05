@@ -28,23 +28,34 @@ class TranslationProcessor:
             self._process_translation(trans_units)
 
     def _process_translation(self, trans_units: list[dict]):
+        print("Processing %d incomplete translations..." % len(trans_units))
+        to_translate = []
+        to_translate_total_len = 0  # Prompt length assumption
+        to_commit = []
         for unit in trans_units:
-            print("*" * 50)
-            print("Translation unit: ", unit)
-            previous_translation = ("\n".join(unit.get("target", []))).strip() or None
-            del unit["target"]
-            skip_translation = False
-            for source in unit["source"]:
-                translated_text = self.gpt_translator.translate(
-                    text=source,
-                    previous_translation=previous_translation,
-                    flags=unit.get("flags"),
-                )
-                if translated_text:
-                    unit["target"] = unit.get("target", []) + [translated_text]
-                else:
-                    print("Translation failed")
-                    skip_translation = True
-                    continue
-            if not skip_translation:
-                self.weblate_client.update_translation_unit(unit)
+            to_translate.append(unit)
+            to_translate_total_len += len(unit["source"])
+            if to_translate_total_len > 20000:  # batch size, in chars
+                trans_units = self.gpt_translator.translate(to_translate)
+                for trans_unit in trans_units.values():
+                    if trans_unit.get("target"):
+                        to_commit.append(trans_unit)
+                to_translate.clear()
+                to_translate_total_len = 0
+
+        if to_translate:
+            trans_units = self.gpt_translator.translate(to_translate)
+            for trans_unit in trans_units.values():
+                if trans_unit.get("target"):
+                    to_commit.append(trans_unit)
+
+        if to_commit:
+            for unit in to_commit:
+                print()
+                print("*" * 80)
+                print("\n".join(unit["source"]))
+                print("\n".join(unit["target"]))
+                proceed = input("Submit [y/N]? ").lower()
+                if proceed == "y":
+                    self.weblate_client.update_translation_unit(unit)
+            to_commit.clear()

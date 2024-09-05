@@ -12,7 +12,8 @@ class WeblateClient:
             "Content-Type": "application/json",
         }
         self.components = sorted(
-            components or [c["slug"] for c in self.get_project_components()["results"]]
+            components
+            or [c["slug"] for c in self.get_project_components().get("results", [])]
         )
         self.target_lang = target_lang
 
@@ -26,7 +27,8 @@ class WeblateClient:
         response = request_with_type(url, headers=headers, **kwargs)
         if response.status_code > 299:
             print("!" * 80)
-            print("ERROR Response: ", response.text)
+            print("ERROR Response (%d): " % response.status_code, response.text)
+            print("URL: %s" % url)
             print("!" * 80)
         # response.raise_for_status()
         return response.json()
@@ -43,7 +45,9 @@ class WeblateClient:
             params = {
                 "q": "state:<translated OR state:needs-editing",
             }
-            yield self._make_request(endpoint, req_type="get", params=params)["results"]
+            yield self._make_request(endpoint, req_type="get", params=params).get(
+                "results"
+            )
 
     def update_translation_unit(self, translated_unit):
         url = translated_unit["url"]
