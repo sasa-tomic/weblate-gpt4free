@@ -1,5 +1,7 @@
 from .weblate_client import WeblateClient
 from .gpt_translator import GPTTranslator
+import editor
+import sys
 
 
 class TranslationProcessor:
@@ -52,14 +54,33 @@ class TranslationProcessor:
         if to_commit:
             accept_all = False
             for unit in to_commit:
-                print()
-                print("*" * 80)
-                print("\n".join(unit["source"]))
-                print("\n".join(unit["target"]))
-                if not accept_all:
-                    proceed = input("Submit [y/N/all]? ").lower()
-                    if proceed == "all":
-                        accept_all = True
-                if accept_all or proceed == "y":
-                    self.weblate_client.update_translation_unit(unit)
+                accept_all, unit = _ask_proceed(unit, accept_all)
+                if not unit:
+                    continue
+                self.weblate_client.update_translation_unit(unit)
             to_commit.clear()
+
+
+def _ask_proceed(unit: dict, accept_all: bool) -> tuple[bool, dict]:
+    if not accept_all:
+        while True:
+            print()
+            print("*" * 80)
+            print("\n".join(unit["source"]))
+            print("\n".join(unit["target"]))
+            proceed = input("Submit yes/no/edit/all/quit [y/N/e/all/q]? ").lower()
+            if proceed == "q":
+                sys.exit(0)
+            elif proceed == "e":
+                s = "\n__EOU\n".join(unit["target"])
+                unit["target"] = (
+                    editor.edit(contents=s).decode("utf-8").split("\n__EOU\n")
+                )
+            elif proceed == "all":
+                accept_all = True
+                break
+            elif proceed == "y":
+                break
+            elif proceed == "n":
+                return (accept_all, None)
+    return (accept_all, unit)
