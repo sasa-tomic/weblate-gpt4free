@@ -70,7 +70,7 @@ __PREV_END
                     print("Retrying...")
                 print(input_text)
 
-                try_expensive = 0
+                try_expensive = 1
                 while True:
                     if try_expensive:
                         result, raw_response = self.translate_expensive(input_text)
