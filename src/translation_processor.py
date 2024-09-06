@@ -62,25 +62,25 @@ class TranslationProcessor:
 
 
 def _ask_proceed(unit: dict, accept_all: bool) -> tuple[bool, dict]:
-    if not accept_all:
-        while True:
-            print()
-            print("*" * 80)
-            print("\n".join(unit["source"]))
-            print("\n".join(unit["target"]))
+    while True:
+        print()
+        print("*" * 80)
+        print("\n".join(unit["source"]))
+        print("\n".join(unit["target"]))
+        if accept_all:
+            proceed = "y"
+        else:
             proceed = input("Submit yes/no/edit/all/quit [y/N/e/all/q]? ").lower()
-            if proceed == "q":
-                sys.exit(0)
-            elif proceed == "e":
-                s = "\n__EOU\n".join(unit["target"])
-                unit["target"] = (
-                    editor.edit(contents=s).decode("utf-8").split("\n__EOU\n")
-                )
-            elif proceed == "all":
-                accept_all = True
-                break
-            elif proceed == "y":
-                break
-            elif proceed == "n":
-                return (accept_all, None)
+        if proceed == "q":
+            sys.exit(0)
+        elif proceed == "e":
+            s = "\n__EOU\n".join(unit["target"])
+            unit["target"] = editor.edit(contents=s).decode("utf-8").split("\n__EOU\n")
+        elif proceed == "all":
+            accept_all = True
+            break
+        elif proceed == "y":
+            break
+        elif proceed == "n":
+            return (accept_all, None)
     return (accept_all, unit)

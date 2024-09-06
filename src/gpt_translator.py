@@ -1,5 +1,6 @@
 import os.path
 import re
+import time
 import g4f
 import g4f.debug
 from g4f.cookies import set_cookies_dir, read_cookie_files
@@ -64,6 +65,7 @@ __PREV_END
             del unit["target"]
             transl_units[unit["id"]] = unit
 
+        time.sleep(3)
         for attempt in range(3):
             try:
                 if attempt > 0:
