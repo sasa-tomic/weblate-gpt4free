@@ -81,13 +81,13 @@ __PREV_END
                         print(r)
 
                     proceed = input(
-                        "Retry cheap | retry expensive | done? [c/e/d] "
+                        "(1) Retry cheap | (2) retry expensive | (c) continue? [1/2/c] "
                     ).lower()
-                    if proceed == "d":
+                    if proceed == "c":
                         break
-                    elif proceed == "c":
+                    elif proceed == "1":
                         try_expensive = 0
-                    elif proceed == "e":
+                    elif proceed == "2":
                         try_expensive = 1
 
                 for r in result:
