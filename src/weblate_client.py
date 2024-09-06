@@ -58,8 +58,6 @@ class WeblateClient:
             "state": 20,
             "target": translated_unit["target"],
         }
-        print("# Translate from:\n", "\n---\n".join(translated_unit["source"]))
-        print("# Translate to:\n", "\n---\n".join(translated_unit["target"]))
         try:
             self._make_request(url, req_type="patch", json=data)
         except requests.exceptions.HTTPError as e:

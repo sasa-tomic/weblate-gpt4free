@@ -50,12 +50,16 @@ class TranslationProcessor:
                     to_commit.append(trans_unit)
 
         if to_commit:
+            accept_all = False
             for unit in to_commit:
                 print()
                 print("*" * 80)
                 print("\n".join(unit["source"]))
                 print("\n".join(unit["target"]))
-                proceed = input("Submit [y/N]? ").lower()
-                if proceed == "y":
+                if not accept_all:
+                    proceed = input("Submit [y/N/all]? ").lower()
+                    if proceed == "all":
+                        accept_all = True
+                if accept_all or proceed == "y":
                     self.weblate_client.update_translation_unit(unit)
             to_commit.clear()
