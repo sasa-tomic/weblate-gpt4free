@@ -39,15 +39,20 @@ class WeblateClient:
 
     def get_incomplete_translation_units(self):
         for component in self.components:
-            endpoint = (
-                f"translations/{self.project}/{component}/{self.target_lang}/units/"
-            )
-            params = {
-                "q": "state:<translated OR state:needs-editing",
-            }
-            yield self._make_request(endpoint, req_type="get", params=params).get(
-                "results"
-            )
+            has_more = True
+            while has_more:
+                endpoint = (
+                    f"translations/{self.project}/{component}/{self.target_lang}/units/"
+                )
+                params = {
+                    "q": "state:<translated OR state:needs-editing",
+                }
+                res = self._make_request(endpoint, req_type="get", params=params)
+                if not res["next"]:
+                    has_more = False
+                res = res.get("results")
+                if res:
+                    yield res
 
     def update_translation_unit(self, translated_unit):
         url = translated_unit["url"]
