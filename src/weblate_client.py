@@ -80,7 +80,7 @@ class WeblateClient:
                 elif only_incomplete:
                     params = {
                         "q": "state:<translated OR state:needs-editing",
-                        "page_size": 50,
+                        "page_size": 100,
                     }
                 else:
                     params = {"page_size": 200}
