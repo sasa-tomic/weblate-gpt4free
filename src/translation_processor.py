@@ -24,7 +24,9 @@ class TranslationProcessor:
         self.gpt_translator = gpt_translator
 
     def process_incomplete_translations(self):
-        for trans_units in self.weblate_client.get_incomplete_translation_units():
+        for trans_units in self.weblate_client.get_translation_units(
+            self.weblate_client.components, only_incomplete=True
+        ):
             if not trans_units:
                 continue
             self._process_translation(trans_units)

@@ -7,15 +7,22 @@ class WeblateClient:
     def __init__(self, api_url, project, components, target_lang, api_key):
         self.api_url = api_url
         self.project = project
+        self.target_lang = target_lang
         self.headers = {
             "Authorization": f"Token {api_key}",
             "Content-Type": "application/json",
         }
-        self.components = sorted(
-            components
-            or [c["slug"] for c in self.get_project_components().get("results", [])]
+        self.components = sorted(components or self.get_project_components())
+        self.glossary_components = sorted(
+            self.get_project_components(filter_glossary=True)
         )
-        self.target_lang = target_lang
+        units = list(
+            self.get_translation_units(self.glossary_components, only_translated=True)
+        )[0]
+        self.glossary = {}
+        for unit in units:
+            for s, t in zip(unit["source"], unit["target"]):
+                self.glossary[s] = t
 
     def _make_request(self, endpoint, req_type="get", **kwargs):
         url = urljoin(self.api_url, endpoint)
@@ -33,22 +40,45 @@ class WeblateClient:
         # response.raise_for_status()
         return response.json()
 
-    def get_project_components(self):
+    def get_project_components(self, filter_glossary=False):
         endpoint = f"projects/{self.project}/components/"
-        return self._make_request(endpoint)
+        response = self._make_request(endpoint)
+        # FIXME: pagination of components needs to be implemented
+        components = response.get("results", [])
+        if filter_glossary:
+            components = [c["slug"] for c in components if c.get("is_glossary", False)]
+        else:
+            components = [c["slug"] for c in components]
+        return components
 
-    def get_incomplete_translation_units(self):
-        for component in self.components:
+    def get_translation_units(
+        self, components, only_translated=False, only_incomplete=False
+    ):
+        for component in components:
             has_more = True
+            page = 0
             while has_more:
                 endpoint = (
                     f"translations/{self.project}/{component}/{self.target_lang}/units/"
                 )
-                params = {
-                    "q": "state:<translated OR state:needs-editing",
-                }
+                if only_translated:
+                    params = {
+                        "q": "state:>=translated",
+                        "page_size": 1000,
+                    }
+                elif only_incomplete:
+                    params = {
+                        "q": "state:<translated OR state:needs-editing",
+                        "page_size": 200,
+                    }
+                else:
+                    params = {"page_size": 200}
+                if page > 0:
+                    params["page"] = page
                 res = self._make_request(endpoint, req_type="get", params=params)
-                if not res["next"]:
+                if res.get("next"):
+                    page += 1
+                else:
                     has_more = False
                 res = res.get("results")
                 if res:
