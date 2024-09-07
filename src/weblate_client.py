@@ -23,17 +23,7 @@ class WeblateClient:
         self.components = self.glossary_components + non_glossary_components
         print("Translating project %s and components %s" % (project, self.components))
         self.glossary = {}
-        glossary_units = list(
-            self.get_translation_units(self.glossary_components, only_translated=True)
-        )
-        if glossary_units:
-            for unit in glossary_units[0]:
-                for s, t in zip(unit["source"], unit["target"]):
-                    self.glossary[s] = t
-            print(
-                "Found %d glossary entries in %d components"
-                % (len(self.glossary), len(self.glossary_components))
-            )
+        self.rebuild_glossary()
 
     def _make_request(self, endpoint, req_type="get", **kwargs):
         url = urljoin(self.api_url, endpoint)
@@ -50,6 +40,22 @@ class WeblateClient:
             print("!" * 80)
         # response.raise_for_status()
         return response.json()
+
+    def rebuild_glossary(self):
+        print("Rebuilding glossary...")
+        self.glossary = {}
+        glossary_units = list(
+            self.get_translation_units(self.glossary_components, only_translated=True)
+        )
+        if glossary_units:
+            for unit in glossary_units[0]:
+                for s, t in zip(unit["source"], unit["target"]):
+                    # Key is lowercased source, value is source + ": " + target
+                    self.glossary[s.lower()] = "%s: %s" % (s, t)
+            print(
+                "Found %d glossary entries in %d components"
+                % (len(self.glossary), len(self.glossary_components))
+            )
 
     def get_project_components(self, filter_glossary=False):
         endpoint = f"projects/{self.project}/components/"

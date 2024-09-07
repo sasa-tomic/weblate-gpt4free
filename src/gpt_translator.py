@@ -43,7 +43,7 @@ class GPTTranslator:
 
     def get_glossary_prompt(self, unit):
         used_glossary = {}
-        unit_source = " ".join(unit["source"])
+        unit_source = " ".join(unit["source"]).lower()
         for e in self.glossary.keys():
             if e in unit_source:
                 used_glossary[e] = self.glossary[e]
@@ -52,7 +52,7 @@ class GPTTranslator:
                 "\n"
                 + self.prompt_glossary
                 + ": "
-                + "; ".join([f"{k}: {v}" for k, v in used_glossary.items()])
+                + "; ".join(used_glossary.values())
                 + "\n"
             )
         return ""
@@ -63,9 +63,9 @@ class GPTTranslator:
         if previous_translation:
             result = """
 {prompt_extension_previous_translation}:
-__PREV_BEGIN
+__BEGIN
 {previous_translation}
-__PREV_END{unit_glossary}
+__END{unit_glossary}
 """.format(
                 prompt_extension_previous_translation=self.prompt_extension_previous_translation,
                 previous_translation=previous_translation,
@@ -77,7 +77,7 @@ __PREV_END{unit_glossary}
             result += f"{self.prompt_extension_flags_max_length}: {flags}"
         unit_id = unit["id"]
         text = "\n__EOU\n".join(unit["source"])
-        result += f"\n/>>B\n{unit_id}: {text}\nE<</"
+        result += f"/>>B\n{unit_id}: {text}\nE<</"
         return result
 
     def translate(self, units=list[dict]):
@@ -100,7 +100,8 @@ __PREV_END{unit_glossary}
                     print("Retrying...")
 
                 try_expensive = 1
-                while True:
+                keep_retrying = True
+                while keep_retrying:
                     if try_expensive:
                         result, raw_response = self.translate_expensive(input_text)
                     else:
@@ -110,15 +111,20 @@ __PREV_END{unit_glossary}
                         for r in result:
                             print(r)
 
-                    proceed = input(
-                        "(1) Retry cheap | (2) retry expensive | (c) continue? [1/2/c] "
-                    ).lower()
-                    if proceed == "c":
-                        break
-                    elif proceed == "1":
-                        try_expensive = 0
-                    elif proceed == "2":
-                        try_expensive = 1
+                    keep_asking = True
+                    while keep_asking:
+                        proceed = input(
+                            "(1) Retry cheap | (2) retry expensive | (c) continue? [1/2/c] "
+                        ).lower()
+                        if proceed == "c":
+                            keep_retrying = False
+                            keep_asking = False
+                        elif proceed == "1":
+                            try_expensive = 0
+                            keep_asking = False
+                        elif proceed == "2":
+                            try_expensive = 1
+                            keep_asking = False
 
                 for r in result:
                     unit_id, translation = r.split(":", 1)
