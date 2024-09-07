@@ -30,7 +30,7 @@ beautifulsoup4==4.12.3
     # via g4f
 blinker==1.8.2
     # via flask
-bottle==0.13.0
+bottle==0.13.1
     # via pywebview
 brotli==1.1.0
     # via g4f
@@ -64,14 +64,14 @@ defusedxml==0.7.1
     # via cairosvg
 duckduckgo-search==6.2.11
     # via g4f
-fastapi==0.113.0
+fastapi==0.114.0
     # via g4f
 flask==3.0.3
     # via g4f
 frozenlist==1.4.1
     # via aiohttp
     # via aiosignal
-g4f==0.3.2.5
+g4f==0.3.2.6
 h11==0.14.0
     # via uvicorn
 idna==3.8
@@ -99,7 +99,7 @@ nest-asyncio==1.6.0
 pillow==10.4.0
     # via cairosvg
     # via g4f
-platformdirs==4.2.2
+platformdirs==4.3.1
     # via g4f
 plyer==2.1.0
     # via g4f
