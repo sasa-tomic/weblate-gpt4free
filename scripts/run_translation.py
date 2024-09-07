@@ -23,6 +23,7 @@ def main():
         prompt_extension_flags_max_length=config["gpt"].get(
             "prompt_extension_flags_max_length"
         ),
+        prompt_glossary=config["gpt"].get("prompt_glossary"),
         target_lang=config["weblate"]["target_language"],
         api_key=config["gpt"].get("api_key"),
     )

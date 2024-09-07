@@ -12,17 +12,28 @@ class WeblateClient:
             "Authorization": f"Token {api_key}",
             "Content-Type": "application/json",
         }
-        self.components = sorted(components or self.get_project_components())
         self.glossary_components = sorted(
             self.get_project_components(filter_glossary=True)
         )
-        units = list(
-            self.get_translation_units(self.glossary_components, only_translated=True)
-        )[0]
+        non_glossary_components = sorted(
+            set(components or self.get_project_components())
+            - set(self.glossary_components)
+        )
+        # First translate the glossary
+        self.components = self.glossary_components + non_glossary_components
+        print("Translating project %s and components %s" % (project, self.components))
         self.glossary = {}
-        for unit in units:
-            for s, t in zip(unit["source"], unit["target"]):
-                self.glossary[s] = t
+        glossary_units = list(
+            self.get_translation_units(self.glossary_components, only_translated=True)
+        )
+        if glossary_units:
+            for unit in glossary_units[0]:
+                for s, t in zip(unit["source"], unit["target"]):
+                    self.glossary[s] = t
+            print(
+                "Found %d glossary entries in %d components"
+                % (len(self.glossary), len(self.glossary_components))
+            )
 
     def _make_request(self, endpoint, req_type="get", **kwargs):
         url = urljoin(self.api_url, endpoint)
@@ -69,7 +80,7 @@ class WeblateClient:
                 elif only_incomplete:
                     params = {
                         "q": "state:<translated OR state:needs-editing",
-                        "page_size": 200,
+                        "page_size": 50,
                     }
                 else:
                     params = {"page_size": 200}

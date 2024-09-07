@@ -36,6 +36,8 @@ class TranslationProcessor:
         to_translate = []
         to_translate_total_len = 0  # Prompt length assumption
         to_commit = []
+        if self.weblate_client.glossary:
+            self.gpt_translator.set_glossary(self.weblate_client.glossary)
         for unit in trans_units:
             to_translate.append(unit)
             to_translate_total_len += len(unit["source"])
