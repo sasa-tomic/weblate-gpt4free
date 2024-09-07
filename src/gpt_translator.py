@@ -44,9 +44,9 @@ class GPTTranslator:
     def get_glossary_prompt(self, unit):
         used_glossary = {}
         unit_source = " ".join(unit["source"]).lower()
-        for e in self.glossary.keys():
-            if e in unit_source:
-                used_glossary[e] = self.glossary[e]
+        for term in self.glossary.keys():
+            if term in unit_source:
+                used_glossary[term] = self.glossary[term]
         if used_glossary:
             return (
                 "\n"
@@ -65,12 +65,14 @@ class GPTTranslator:
 {prompt_extension_previous_translation}:
 __BEGIN
 {previous_translation}
-__END{unit_glossary}
+__END
 """.format(
                 prompt_extension_previous_translation=self.prompt_extension_previous_translation,
                 previous_translation=previous_translation,
-                unit_glossary=self.get_glossary_prompt(unit),
             )
+        unit_glossary = self.get_glossary_prompt(unit)
+        if unit_glossary:
+            result += unit_glossary
 
         flags = unit.get("flags", None)
         if flags and "max-length:" in flags:

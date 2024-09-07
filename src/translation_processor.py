@@ -74,7 +74,7 @@ def _ask_proceed(unit: dict, accept_all: bool) -> tuple[bool, dict]:
         if accept_all:
             proceed = "y"
         else:
-            proceed = input("Submit yes/no/edit/all/quit [y/N/e/all/q]? ").lower()
+            proceed = input("Submit yes/no/edit/all/quit [y/n/e/all/q]? ").lower()
         if proceed == "q":
             sys.exit(0)
         elif proceed == "e":
