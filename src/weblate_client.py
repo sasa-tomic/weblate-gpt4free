@@ -83,6 +83,8 @@ class WeblateClient:
                         "q": "state:>=translated",
                         "page_size": 1000,
                     }
+                    if page > 0:
+                        params["page"] = page
                 elif only_incomplete:
                     params = {
                         "q": "state:<translated OR state:needs-editing",
@@ -90,8 +92,6 @@ class WeblateClient:
                     }
                 else:
                     params = {"page_size": 200}
-                if page > 0:
-                    params["page"] = page
                 res = self._make_request(endpoint, req_type="get", params=params)
                 if res.get("next"):
                     page += 1
