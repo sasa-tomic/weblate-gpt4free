@@ -17,5 +17,6 @@ rye run python3 scripts/run_translation.py
 # Update all deps
 
 ```
+rye sync
 rye lock --update-all
 ```
