@@ -13,3 +13,9 @@ Copy `config/config.yml.example` to `config/config.yml` and edit configuration.
 ```
 rye run python3 scripts/run_translation.py
 ```
+
+# Update all deps
+
+```
+rye lock --update-all
+```
