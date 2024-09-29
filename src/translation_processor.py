@@ -30,7 +30,7 @@ class TranslationProcessor:
 
     def process_incomplete_translations(self):
         for project in self.projects:
-            print("Processing project:", project)
+            print("Processing project[/component]:", project)
             self.update_weblate_client(project)
             for trans_units in self.weblate_client.get_translation_units(
                 self.weblate_client.components, only_incomplete=True

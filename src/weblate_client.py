@@ -7,8 +7,8 @@ class WeblateClient:
         self.api_url = api_url
         if "/" not in project:
             project += "/"
-        self.project, components = project.split("/", 1)
-        self.project = project
+        self.project, component = project.split("/", 1)
+        print("Parsed project and component:", self.project, component)
         self.target_lang = target_lang
         self.headers = {
             "Authorization": f"Token {api_key}",
@@ -18,7 +18,7 @@ class WeblateClient:
             self.get_project_components(filter_glossary=True)
         )
         non_glossary_components = sorted(
-            set(components or self.get_project_components())
+            set([component]) or set(self.get_project_components())
             - set(self.glossary_components)
         )
         # First translate the glossary
