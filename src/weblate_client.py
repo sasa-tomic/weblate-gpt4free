@@ -1,5 +1,4 @@
 import requests
-import time
 from urllib.parse import urljoin
 
 
@@ -115,4 +114,3 @@ class WeblateClient:
         except requests.exceptions.HTTPError as e:
             print("Failed to update translation unit: ", url)
             print(e)
-        # time.sleep(5)

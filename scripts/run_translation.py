@@ -24,6 +24,7 @@ def main():
             "prompt_extension_flags_max_length"
         ),
         prompt_glossary=config["gpt"].get("prompt_glossary"),
+        prompt_remind_translate=config["gpt"].get("prompt_remind_translate"),
         target_lang=config["weblate"]["target_language"],
         api_key=config["gpt"].get("api_key"),
     )

@@ -9,4 +9,5 @@ gpt:
   prompt: "You are a professional translator from English to FIXME:XXXXXXXXX. Translate the entire text and keep exactly the same formatting as in the input text. If there are special characters or punctuation marks, retain them in the output text in the same place as in the input file, and do not add new characters. Mark the start of the translation with '/>>B' and the end of the translation with 'E<</'. Always use only grammatically correct sentences. Consistently use the same noun for a concept. Always retain all HTTP or markdown links and all special characters and formatting from the input text."
   prompt_extension_previous_translation: "Translation of a similar text"
   prompt_extension_flags_max_length: "Edit the translation to be shorter than the max-length characters"
+  prompt_remind_translate: "Translate:"
   api_key: <openai-api-key>   # e.g. openai keys can be made at https://platform.openai.com/api-keys

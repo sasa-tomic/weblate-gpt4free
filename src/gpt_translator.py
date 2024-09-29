@@ -19,6 +19,7 @@ class GPTTranslator:
         prompt=None,
         prompt_extension_previous_translation=None,
         prompt_extension_flags_max_length=None,
+        prompt_remind_translate=None,
         prompt_glossary=None,
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         api_key=None,
@@ -33,6 +34,7 @@ class GPTTranslator:
             prompt_extension_previous_translation or "Previous translation"
         )
         self.prompt_extension_flags_max_length = prompt_extension_flags_max_length
+        self.prompt_remind_translate = prompt_remind_translate
         self.prompt_glossary = prompt_glossary
         self.api_key = api_key
         self.glossary = glossary
@@ -79,7 +81,7 @@ __END
             result += f"{self.prompt_extension_flags_max_length}: {flags}"
         unit_id = unit["id"]
         text = "\n__EOU\n".join(unit["source"])
-        result += f"/>>B\n{unit_id}: {text}\nE<</"
+        result += f"{self.prompt_remind_translate}\n/>>B\n{unit_id}: {text}\nE<</"
         return result
 
     def translate(self, units=list[dict]):
