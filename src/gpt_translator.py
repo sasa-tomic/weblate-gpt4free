@@ -62,7 +62,7 @@ class GPTTranslator:
     def _prepare_one(self, unit):
         result = ""
         previous_translation = [t for t in unit.get("target", []) if t.strip()]
-        if previous_translation:
+        if previous_translation and False:
             result += """
 {prompt_extension_previous_translation}:
 __BEGIN
@@ -103,7 +103,7 @@ __END
                 if attempt > 0:
                     print("Retrying...")
 
-                try_expensive = 1
+                try_expensive = True
                 retry_translating = True
                 while retry_translating:
                     if try_expensive:
@@ -125,10 +125,12 @@ __END
                             retry_translating = False
                             retry_asking_user_input = False
                         elif proceed == "1":
-                            try_expensive = 0
+                            retry_translating = True
+                            try_expensive = False
                             retry_asking_user_input = False
                         elif proceed == "2":
-                            try_expensive = 1
+                            retry_translating = True
+                            try_expensive = True
                             retry_asking_user_input = False
 
                 for r in result:

@@ -8,28 +8,36 @@ class TranslationProcessor:
     def __init__(
         self,
         api_url,
-        project,
-        components,
+        projects,
         target_lang,
         api_key,
         gpt_translator=GPTTranslator(),
     ):
-        self.weblate_client = WeblateClient(
-            api_url=api_url,
-            project=project,
-            components=components,
-            target_lang=target_lang,
-            api_key=api_key,
-        )
+        self.api_url = api_url
+        self.projects = projects
+        self.target_lang = target_lang
+        self.api_key = api_key
+        self.weblate_client = None
         self.gpt_translator = gpt_translator
 
+    def update_weblate_client(self, project):
+        self.weblate_client = WeblateClient(
+            api_url=self.api_url,
+            project=project,
+            target_lang=self.target_lang,
+            api_key=self.api_key,
+        )
+
     def process_incomplete_translations(self):
-        for trans_units in self.weblate_client.get_translation_units(
-            self.weblate_client.components, only_incomplete=True
-        ):
-            if not trans_units:
-                continue
-            self._process_translation(trans_units)
+        for project in self.projects:
+            print("Processing project:", project)
+            self.update_weblate_client(project)
+            for trans_units in self.weblate_client.get_translation_units(
+                self.weblate_client.components, only_incomplete=True
+            ):
+                if not trans_units:
+                    continue
+                self._process_translation(trans_units)
 
     def _process_translation(self, trans_units: list[dict]):
         print("Processing %d incomplete translations..." % len(trans_units))

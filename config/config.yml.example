@@ -1,7 +1,8 @@
 weblate:
   api_url: https://hosted.weblate.org/api/
-  project: f-droid
-  components: component_a,component_b
+  projects:
+    # components can be specified as: project/component
+    - f-droid
   target_language: <2-letter-code>
   api_key: <key>  # you can get this at a page like https://hosted.weblate.org/accounts/profile/#api
 

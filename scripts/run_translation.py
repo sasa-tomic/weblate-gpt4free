@@ -11,10 +11,6 @@ from src.utils import load_config
 def main():
     config = load_config("config/config.yml")
 
-    components = config["weblate"].get("components")
-    if components:
-        components = components.split(",")
-
     gpt_translator = GPTTranslator(
         prompt=config["gpt"]["prompt"],
         prompt_extension_previous_translation=config["gpt"].get(
@@ -30,8 +26,7 @@ def main():
     )
     processor = TranslationProcessor(
         api_url=config["weblate"]["api_url"],
-        project=config["weblate"]["project"],
-        components=components,
+        projects=config["weblate"]["projects"],
         target_lang=config["weblate"]["target_language"],
         api_key=config["weblate"]["api_key"],
         gpt_translator=gpt_translator,

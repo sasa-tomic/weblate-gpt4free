@@ -3,8 +3,11 @@ from urllib.parse import urljoin
 
 
 class WeblateClient:
-    def __init__(self, api_url, project, components, target_lang, api_key):
+    def __init__(self, api_url, project, target_lang, api_key):
         self.api_url = api_url
+        if "/" not in project:
+            project += "/"
+        self.project, components = project.split("/", 1)
         self.project = project
         self.target_lang = target_lang
         self.headers = {
@@ -59,7 +62,7 @@ class WeblateClient:
     def get_project_components(self, filter_glossary=False):
         endpoint = f"projects/{self.project}/components/"
         response = self._make_request(endpoint)
-        # FIXME: pagination of components needs to be implemented
+        # FIXME: pagination of components not yet implemented
         components = response.get("results", [])
         if filter_glossary:
             components = [c["slug"] for c in components if c.get("is_glossary", False)]
