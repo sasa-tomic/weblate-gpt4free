@@ -25,6 +25,8 @@ class WeblateClient:
             component
             or set(self.get_project_components()) - set(self.glossary_components)
         )
+        self.default_incomplete_page_size = 100
+        self._incomplete_page_size = self.default_incomplete_page_size
         # First translate the glossary
         self.components = self.glossary_components + non_glossary_components
         print("Translating project %s and components %s" % (project, self.components))
@@ -74,6 +76,14 @@ class WeblateClient:
             components = [c["slug"] for c in components]
         return components
 
+    def set_incomplete_page_size(self, size):
+        print("Setting incomplete page size to %d" % size)
+        self._incomplete_page_size = size
+
+    @property
+    def incomplete_page_size(self):
+        return self._incomplete_page_size
+
     def get_translation_units(
         self, components, only_translated=False, only_incomplete=False
     ):
@@ -94,7 +104,7 @@ class WeblateClient:
                 elif only_incomplete:
                     params = {
                         "q": "state:<translated OR state:needs-editing",
-                        "page_size": 100,
+                        "page_size": self._incomplete_page_size,
                     }
                 else:
                     params = {"page_size": 200}
