@@ -112,20 +112,27 @@ def _print_one(unit: dict):
     print("\n".join(unit["target"]))
 
 
-def _ask_proceed(unit: dict, accept_all: bool) -> tuple[bool, dict]:
+def _ask_proceed(unit: dict, accept_all: str) -> tuple[str, dict]:
     while True:
         _print_one(unit)
         if accept_all:
-            proceed = "y"
+            proceed = accept_all
         else:
-            proceed = input("Submit yes/no/edit/all/quit [y/n/e/all/q]? ").lower()
+            proceed = input(
+                "Submit yes/no/edit/all/skip all/quit [y/n/e/all/skip/q]? "
+            ).lower()
         if proceed == "q":
             sys.exit(0)
         elif proceed == "e":
             s = "\n__EOU\n".join(unit["target"])
-            unit["target"] = editor.edit(contents=s).decode("utf-8").split("\n__EOU\n")
+            unit["target"] = (
+                editor.edit(contents=s).decode("utf-8").strip().split("\n__EOU\n")
+            )
         elif proceed == "all":
-            accept_all = True
+            accept_all = "y"
+            break
+        elif proceed == "skip":
+            accept_all = "n"
             break
         elif proceed == "y":
             break
