@@ -83,7 +83,7 @@ __END
             result += f"{self.prompt_extension_flags_max_length}: {flags}"
         unit_id = unit["id"]
         text = "\n__EOU\n".join(unit["source"])
-        result += f"/>>B\n{unit_id}: {text}\nE<</"
+        result += f"\n/>>B\n{unit_id}: {text}\nE<</"
         return result
 
     def translate(self, units=list[dict]):
@@ -135,6 +135,8 @@ __END
                             retry_asking_user_input = False
 
                 for r in result:
+                    if ":" not in r:
+                        continue
                     unit_id, translation = r.split(":", 1)
                     unit_id = int(unit_id.strip())
                     unit = transl_units.get(unit_id)
