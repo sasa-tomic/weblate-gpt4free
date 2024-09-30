@@ -70,8 +70,9 @@ class TranslationProcessor:
                 if trans_unit.get("target"):
                     to_commit.append(trans_unit)
 
+        commit_count = 0
         if to_commit:
-            accept_all = False
+            accept_all = None
             print(">" * 80)
             print("> Here is the entire translation")
             print(">" * 80)
@@ -81,12 +82,24 @@ class TranslationProcessor:
             print("! Proceeding with the commit of translations")
             print("!" * 80)
             for unit in to_commit:
+                cached_translation_target = self.cacher.cache_get_unit(unit)
+                if unit["target"] == cached_translation_target == unit["source"]:
+                    # User confirmed that the source and target are the same
+                    print("Skipping translation of unit with no changes")
+                    continue
                 accept_all, unit_to_update = _ask_proceed(unit, accept_all)
                 if not unit_to_update:
                     continue
                 self.cacher.cache_update_unit(unit_to_update)
                 self.weblate_client.update_translation_unit(unit_to_update)
+                commit_count += 1
             to_commit.clear()
+
+        # Compensate for the skipped translations
+        self.weblate_client.set_incomplete_page_size(
+            self.weblate_client.default_incomplete_page_size
+            + (self.weblate_client.default_incomplete_page_size - commit_count)
+        )
 
 
 def _print_one(unit: dict):
