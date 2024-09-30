@@ -60,6 +60,7 @@ curl-cffi==0.7.2
     # via g4f
 defusedxml==0.7.1
     # via cairosvg
+diskcache==5.6.3
 duckduckgo-search==6.2.13
     # via g4f
 fastapi==0.115.0
@@ -97,6 +98,7 @@ nest-asyncio==1.6.0
 pillow==10.4.0
     # via cairosvg
     # via g4f
+pip==24.2
 platformdirs==4.3.6
     # via g4f
 plyer==2.1.0

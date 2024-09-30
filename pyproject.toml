@@ -7,11 +7,12 @@ readme = "README.md"
 dependencies = [
     "requests>=2.32.3",
     "pyyaml>=6.0.2",
-    "g4f[all]>=0.3.2.6",
+    "g4f[all]>=0.3.2.8",
     "python-editor>=1.0.4",
     "setuptools>=74.1.2",
+    "pip>=24.2",
+    "diskcache>=5.6.3",
 ]
 
 [tool.rye]
 virtual = true
-dev-dependencies = ["g4f[all]>=0.3.2.5"]

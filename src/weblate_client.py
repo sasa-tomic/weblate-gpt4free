@@ -8,6 +8,10 @@ class WeblateClient:
         if "/" not in project:
             project += "/"
         self.project, component = project.split("/", 1)
+        if component:
+            component = set([component])
+        else:
+            component = set()
         print("Parsed project and component:", self.project, component)
         self.target_lang = target_lang
         self.headers = {
@@ -18,8 +22,8 @@ class WeblateClient:
             self.get_project_components(filter_glossary=True)
         )
         non_glossary_components = sorted(
-            set([component]) or set(self.get_project_components())
-            - set(self.glossary_components)
+            component
+            or set(self.get_project_components()) - set(self.glossary_components)
         )
         # First translate the glossary
         self.components = self.glossary_components + non_glossary_components

@@ -4,6 +4,7 @@ import time
 import g4f
 import g4f.debug
 from g4f.cookies import set_cookies_dir, read_cookie_files
+from .cacher import Cacher
 
 g4f.debug.logging = True
 
@@ -23,6 +24,7 @@ class GPTTranslator:
         prompt_glossary=None,
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         api_key=None,
+        cacher: Cacher = Cacher(),
         glossary={},
     ):
         self.model = model
@@ -38,6 +40,7 @@ class GPTTranslator:
         self.prompt_glossary = prompt_glossary
         self.api_key = api_key
         self.glossary = glossary
+        self.cacher = cacher
 
     def set_glossary(self, glossary: dict[str, str]):
         """Set glossary (dict of word -> translation) for all translations, will be used in the prompt."""
@@ -49,13 +52,13 @@ class GPTTranslator:
         for term in self.glossary.keys():
             if term in unit_source:
                 used_glossary[term] = self.glossary[term]
+        for term in unit_source.split():
+            cached_translation = self.cacher.cache_get_string(term)
+            if cached_translation:
+                used_glossary[term] = "%s: %s" % (term, cached_translation)
         if used_glossary:
             return (
-                "\n"
-                + self.prompt_glossary
-                + ": "
-                + "; ".join(used_glossary.values())
-                + "\n"
+                self.prompt_glossary + ": " + "; ".join(used_glossary.values()) + "\n"
             )
         return ""
 
@@ -72,21 +75,22 @@ __END
                 prompt_extension_previous_translation=self.prompt_extension_previous_translation,
                 previous_translation=previous_translation,
             )
-        unit_glossary = self.get_glossary_prompt(unit)
-        if unit_glossary:
-            result += unit_glossary
+        result += (self.prompt_remind_translate.strip() + " ") or ""
+        result += self.get_glossary_prompt(unit) or ""
 
         flags = unit.get("flags", None)
         if flags and "max-length:" in flags:
             result += f"{self.prompt_extension_flags_max_length}: {flags}"
         unit_id = unit["id"]
         text = "\n__EOU\n".join(unit["source"])
-        result += f"{self.prompt_remind_translate}\n/>>B\n{unit_id}: {text}\nE<</"
+        result += f"/>>B\n{unit_id}: {text}\nE<</"
         return result
 
     def translate(self, units=list[dict]):
-        input_text = self.prompt + "\n\n".join(
-            [self._prepare_one(unit) for unit in units]
+        input_text = (
+            self.prompt
+            + "\n\n"
+            + "\n\n".join([self._prepare_one(unit) for unit in units])
         )
 
         transl_units = {}
@@ -110,10 +114,7 @@ __END
                         result, raw_response = self.translate_expensive(input_text)
                     else:
                         result, raw_response = self.translate_cheap(input_text)
-
-                    if result:
-                        for r in result:
-                            print(r)
+                    print(raw_response)
 
                     retry_translating = False
                     retry_asking_user_input = True
