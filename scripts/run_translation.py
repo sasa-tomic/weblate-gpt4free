@@ -12,7 +12,8 @@ from src.cacher import Cacher
 def main():
     config = load_config("config/config.yml")
 
-    cacher = Cacher()
+    target_lang = config["weblate"]["target_language"]
+    cacher = Cacher(lang=target_lang)
     gpt_translator = GPTTranslator(
         prompt=config["gpt"]["prompt"],
         prompt_extension_previous_translation=config["gpt"].get(
@@ -23,14 +24,14 @@ def main():
         ),
         prompt_glossary=config["gpt"].get("prompt_glossary"),
         prompt_remind_translate=config["gpt"].get("prompt_remind_translate"),
-        target_lang=config["weblate"]["target_language"],
+        target_lang=target_lang,
         api_key=config["gpt"].get("api_key"),
         cacher=cacher,
     )
     processor = TranslationProcessor(
         api_url=config["weblate"]["api_url"],
         projects=config["weblate"]["projects"],
-        target_lang=config["weblate"]["target_language"],
+        target_lang=target_lang,
         api_key=config["weblate"]["api_key"],
         gpt_translator=gpt_translator,
         cacher=cacher,

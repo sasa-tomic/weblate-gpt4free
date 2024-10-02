@@ -3,8 +3,8 @@ import diskcache as dc
 
 
 class Cacher:
-    def __init__(self):
-        self.cache = dc.Cache(pathlib.Path(__file__).parent.parent / "cache")
+    def __init__(self, lang: str):
+        self.cache = dc.Cache(pathlib.Path(__file__).parent.parent / "cache" / lang)
 
     def cache_get_unit(self, unit: dict):
         """

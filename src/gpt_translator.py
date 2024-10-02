@@ -24,7 +24,7 @@ class GPTTranslator:
         prompt_glossary=None,
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         api_key=None,
-        cacher: Cacher = Cacher(),
+        cacher: Cacher = Cacher(lang="unknown"),
         glossary={},
     ):
         self.model = model
