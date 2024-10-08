@@ -1,5 +1,8 @@
+#!/usr/bin/env python3
+from collections import namedtuple
 import os.path
 import re
+import json
 import time
 import g4f
 import g4f.debug
@@ -12,11 +15,16 @@ cookies_dir = os.path.join(os.path.dirname(__file__), "har_and_cookies")
 set_cookies_dir(cookies_dir)
 read_cookie_files(cookies_dir)
 
+TranslationResponse = namedtuple(
+    "TranslationResponse", ["translation_units", "new_glossary"]
+)
+
 
 class GPTTranslator:
     def __init__(
         self,
-        model="gpt-3.5-turbo",
+        model_cheap="meta-llama/Meta-Llama-3.1-405B-Instruct",
+        model_expensive="gpt-4o",
         prompt=None,
         prompt_extension_previous_translation=None,
         prompt_extension_flags_max_length=None,
@@ -27,7 +35,8 @@ class GPTTranslator:
         cacher: Cacher = Cacher(lang="unknown"),
         glossary={},
     ):
-        self.model = model
+        self.model_cheap = model_cheap
+        self.model_expensive = model_expensive
         self.prompt = (
             prompt
             or f"Completely translate the following text to {target_lang}, not leaving any of the original text in the output, and return only the translated text. Make sure to keep the same formatting that the original text has"
@@ -46,16 +55,23 @@ class GPTTranslator:
         """Set glossary (dict of word -> translation) for all translations, will be used in the prompt."""
         self.glossary = glossary
 
-    def get_glossary_prompt(self, unit):
+    def get_glossary_prompt(self, units):
         used_glossary = {}
-        unit_source = " ".join(unit["source"]).lower()
-        for term in self.glossary.keys():
-            if term in unit_source:
-                used_glossary[term] = self.glossary[term]
-        for term in unit_source.split():
-            cached_translation = self.cacher.cache_get_string(term)
-            if cached_translation:
-                used_glossary[term] = "%s: %s" % (term, cached_translation)
+        for unit in units:
+            unit_source = " ".join(unit["source"]).lower()
+            for term in self.glossary.keys():
+                # Search each weblate glossary item in input text to build relevant glossary items
+                if term in unit_source:
+                    used_glossary[term] = self.glossary[term]
+            for term in unit_source.split():
+                # Split source item text into terms and (inverse) search in persistent cacher glossary
+                # Remove any leading or trailing non-alphanumerics
+                term = re.sub(r"\W*(.+?)\W*$", r"\1", term, flags=re.UNICODE)
+                if term in used_glossary:
+                    continue
+                cached_translation = self.cacher.cache_get_string(term)
+                if cached_translation:
+                    used_glossary[term] = "%s: %s" % (term, cached_translation)
         if used_glossary:
             return (
                 self.prompt_glossary + ": " + "; ".join(used_glossary.values()) + "\n"
@@ -76,7 +92,6 @@ __END
                 previous_translation=previous_translation,
             )
         result += (self.prompt_remind_translate.strip() + " ") or ""
-        result += self.get_glossary_prompt(unit) or ""
 
         flags = unit.get("flags", None)
         if flags and "max-length:" in flags:
@@ -86,9 +101,12 @@ __END
         result += f"\n/>>B\n{unit_id}: {text}\nE<</"
         return result
 
-    def translate(self, units=list[dict]):
+    def translate(self, units=list[dict]) -> TranslationResponse:
+        glossary_prompt = self.get_glossary_prompt(units) or ""
         input_text = (
             self.prompt
+            + "\n\n"
+            + glossary_prompt
             + "\n\n"
             + "\n\n".join([self._prepare_one(unit) for unit in units])
         )
@@ -134,6 +152,15 @@ __END
                             try_expensive = True
                             retry_asking_user_input = False
 
+                new_glossary = re.search(
+                    r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL
+                )
+                if new_glossary:
+                    new_glossary = new_glossary.group(1)
+                    try:
+                        new_glossary = json.loads(new_glossary)
+                    except ValueError:  # includes simplejson.decoder.JSONDecodeError:
+                        print("Failed to parse new glossary:", new_glossary)
                 for r in result:
                     if ":" not in r:
                         continue
@@ -144,12 +171,8 @@ __END
                         unit["target"] = [t.strip() for t in translation.split("__EOU")]
                         transl_units[unit_id] = unit
                 if transl_units:
-                    return transl_units
+                    return TranslationResponse(transl_units, new_glossary)
                 else:
-                    if "EMPTY" in raw_response or not (
-                        "/>>B" in raw_response and "E<</" in raw_response
-                    ):
-                        return ""
                     print(input_text)
                     print(raw_response)
                     raise Exception(
@@ -165,15 +188,16 @@ __END
         raw_response = g4f.ChatCompletion.create(
             # provider=g4f.Provider.OpenaiChat,
             # provider=g4f.Provider.Chatgpt4Online,
-            # provider=g4f.Provider.You,
             # provider=g4f.Provider.ChatgptFree,
-            # model="gpt-3.5-turbo",
-            provider=g4f.Provider.Openai,
-            api_key=self.api_key,
-            model="gpt-4o-mini",
+            # provider=g4f.Provider.You,
+            # provider=g4f.provider.Airforce,
+            model=self.model_cheap,
+            provider=g4f.Provider.DeepInfra,
+            api_key="mw2vhzjYfv1pMYVQL4fhSGcCkwn5niEa",
             temperature=0.1,
             messages=[{"role": "user", "content": text}],
         )
+        print(raw_response)
 
         results = re.findall(r"/>>B(.+?)E<</", raw_response, re.DOTALL)
         if not results:
@@ -187,7 +211,7 @@ __END
         raw_response = g4f.ChatCompletion.create(
             provider=g4f.Provider.Openai,
             api_key=self.api_key,
-            model="gpt-4o",
+            model=self.model_expensive,
             temperature=0.1,
             messages=[{"role": "user", "content": text}],
         )

@@ -25,7 +25,7 @@ class WeblateClient:
             component
             or set(self.get_project_components()) - set(self.glossary_components)
         )
-        self.default_incomplete_page_size = 100
+        self.default_incomplete_page_size = 50
         self._incomplete_page_size = self.default_incomplete_page_size
         # First translate the glossary
         self.components = self.glossary_components + non_glossary_components
@@ -59,7 +59,7 @@ class WeblateClient:
             for unit in glossary_units[0]:
                 for s, t in zip(unit["source"], unit["target"]):
                     # Key is lowercased source, value is source + ": " + target
-                    self.glossary[s.lower()] = "%s: %s" % (s, t)
+                    self.glossary[s.lower()] = "%s: %s" % (s, t or s)
             print(
                 "Found %d glossary entries in %d components"
                 % (len(self.glossary), len(self.glossary_components))
@@ -88,6 +88,7 @@ class WeblateClient:
         self, components, only_translated=False, only_incomplete=False
     ):
         for component in components:
+            self._incomplete_page_size = self.default_incomplete_page_size
             has_more = True
             page = 0
             while has_more:

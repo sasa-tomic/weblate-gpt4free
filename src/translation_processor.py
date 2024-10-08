@@ -57,16 +57,22 @@ class TranslationProcessor:
             to_translate.append(unit_to_update)
             to_translate_total_len += len(unit_to_update["source"])
             if to_translate_total_len > 20000:  # batch size, in chars
-                trans_units = self.gpt_translator.translate(to_translate)
-                for trans_unit in trans_units.values():
+                transl_units, new_glossary = self.gpt_translator.translate(to_translate)
+                for k, v in new_glossary.items():
+                    print("Updating glossary cache %s --> %s" % (k, v))
+                    self.cacher.cache_update_string(k, v)
+                for trans_unit in transl_units.values():
                     if trans_unit.get("target"):
                         to_commit.append(trans_unit)
                 to_translate.clear()
                 to_translate_total_len = 0
 
         if to_translate:
-            trans_units = self.gpt_translator.translate(to_translate)
-            for trans_unit in trans_units.values():
+            transl_units, new_glossary = self.gpt_translator.translate(to_translate)
+            for k, v in new_glossary.items():
+                print("Updating glossary cache %s --> %s" % (k, v))
+                self.cacher.cache_update_string(k, v)
+            for trans_unit in transl_units.values():
                 if trans_unit.get("target"):
                     to_commit.append(trans_unit)
 
