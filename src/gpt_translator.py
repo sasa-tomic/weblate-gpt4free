@@ -23,7 +23,8 @@ TranslationResponse = namedtuple(
 class GPTTranslator:
     def __init__(
         self,
-        model_cheap="meta-llama/Meta-Llama-3.1-405B-Instruct",
+        #model_cheap="meta-llama/Meta-Llama-3.1-405B-Instruct",
+        model_cheap="gpt-4o-mini",
         model_expensive="gpt-4o",
         prompt=None,
         prompt_extension_previous_translation=None,
@@ -194,7 +195,8 @@ __END
             # provider=g4f.Provider.You,
             # provider=g4f.provider.Airforce,
             model=self.model_cheap,
-            provider=g4f.Provider.DeepInfra,
+            # provider=g4f.Provider.DeepInfra,
+            provider=g4f.Provider.Openai,
             api_key=self.api_key_cheap,
             temperature=0.1,
             messages=[{"role": "user", "content": text}],
