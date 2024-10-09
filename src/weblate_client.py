@@ -3,7 +3,7 @@ from urllib.parse import urljoin
 
 
 class WeblateClient:
-    def __init__(self, api_url, project, target_lang, api_key):
+    def __init__(self, api_url, project, target_lang, weblate_api_key):
         self.api_url = api_url
         if "/" not in project:
             project += "/"
@@ -15,7 +15,7 @@ class WeblateClient:
         print("Parsed project and component:", self.project, component)
         self.target_lang = target_lang
         self.headers = {
-            "Authorization": f"Token {api_key}",
+            "Authorization": f"Token {weblate_api_key}",
             "Content-Type": "application/json",
         }
         self.glossary_components = sorted(

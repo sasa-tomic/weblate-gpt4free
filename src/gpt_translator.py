@@ -31,7 +31,8 @@ class GPTTranslator:
         prompt_remind_translate=None,
         prompt_glossary=None,
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
-        api_key=None,
+        api_key_expensive=None,
+        api_key_cheap=None,
         cacher: Cacher = Cacher(lang="unknown"),
         glossary={},
     ):
@@ -47,7 +48,8 @@ class GPTTranslator:
         self.prompt_extension_flags_max_length = prompt_extension_flags_max_length
         self.prompt_remind_translate = prompt_remind_translate
         self.prompt_glossary = prompt_glossary
-        self.api_key = api_key
+        self.api_key_expensive = api_key_expensive
+        self.api_key_cheap = api_key_cheap
         self.glossary = glossary
         self.cacher = cacher
 
@@ -154,7 +156,7 @@ __END
 
                 new_glossary = re.search(
                     r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL
-                )
+                ) or {}
                 if new_glossary:
                     new_glossary = new_glossary.group(1)
                     try:
@@ -193,7 +195,7 @@ __END
             # provider=g4f.provider.Airforce,
             model=self.model_cheap,
             provider=g4f.Provider.DeepInfra,
-            api_key="mw2vhzjYfv1pMYVQL4fhSGcCkwn5niEa",
+            api_key=self.api_key_cheap,
             temperature=0.1,
             messages=[{"role": "user", "content": text}],
         )
@@ -210,7 +212,7 @@ __END
     def translate_expensive(self, text):
         raw_response = g4f.ChatCompletion.create(
             provider=g4f.Provider.Openai,
-            api_key=self.api_key,
+            api_key=self.api_key_expensive,
             model=self.model_expensive,
             temperature=0.1,
             messages=[{"role": "user", "content": text}],

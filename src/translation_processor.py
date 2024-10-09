@@ -10,14 +10,14 @@ class TranslationProcessor:
         api_url,
         projects,
         target_lang,
-        api_key,
+        weblate_api_key,
         gpt_translator,
         cacher: Cacher,
     ):
         self.api_url = api_url
         self.projects = projects
         self.target_lang = target_lang
-        self.api_key = api_key
+        self.weblate_api_key = weblate_api_key
         self.weblate_client = None
         self.gpt_translator = gpt_translator
         self.cacher = cacher
@@ -27,7 +27,7 @@ class TranslationProcessor:
             api_url=self.api_url,
             project=project,
             target_lang=self.target_lang,
-            api_key=self.api_key,
+            weblate_api_key=self.weblate_api_key,
         )
 
     def process_incomplete_translations(self):

@@ -25,14 +25,15 @@ def main():
         prompt_glossary=config["gpt"].get("prompt_glossary"),
         prompt_remind_translate=config["gpt"].get("prompt_remind_translate"),
         target_lang=target_lang,
-        api_key=config["gpt"].get("api_key"),
+        api_key_expensive=config["gpt"].get("api_key_expensive"),
+        api_key_cheap=config["gpt"].get("api_key_cheap"),
         cacher=cacher,
     )
     processor = TranslationProcessor(
         api_url=config["weblate"]["api_url"],
         projects=config["weblate"]["projects"],
         target_lang=target_lang,
-        api_key=config["weblate"]["api_key"],
+        weblate_api_key=config["weblate"]["api_key"],
         gpt_translator=gpt_translator,
         cacher=cacher,
     )
