@@ -2,6 +2,7 @@ from .cacher import Cacher
 from .weblate_client import WeblateClient
 import editor
 import sys
+import json
 
 
 class TranslationProcessor:
@@ -58,7 +59,8 @@ class TranslationProcessor:
             to_translate_total_len += len(unit_to_update["source"])
             if to_translate_total_len > 20000:  # batch size, in chars
                 transl_units, new_glossary = self.gpt_translator.translate(to_translate)
-                update_glossary = input("Update glossary [y/n]?").lower()
+                print(json.dumps(new_glossary, indent=2))
+                update_glossary = input("Update glossary [y/n]? ").lower()
                 if update_glossary == "y":
                     for k, v in new_glossary.items():
                         if self.cacher.cache_get_string(k):
@@ -74,7 +76,8 @@ class TranslationProcessor:
 
         if to_translate:
             transl_units, new_glossary = self.gpt_translator.translate(to_translate)
-            update_glossary = input("Update glossary [y/n]?").lower()
+            print(json.dumps(new_glossary, indent=2))
+            update_glossary = input("Update glossary [y/n]? ").lower()
             if update_glossary == "y":
                 for k, v in new_glossary.items():
                     if self.cacher.cache_get_string(k):
