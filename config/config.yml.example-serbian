@@ -11,6 +11,7 @@ gpt:
   prompt_extension_previous_translation: "Превод сличног текста"
   prompt_extension_flags_max_length: "Измени превод тако да буде краћи од max-length знакова"
   prompt_glossary: "Користи постојећи глосар у преводу"
+  prompt_plural: "У улазном тексту са __EOU су раздвојене једнина и множина. У српски преведи са три секције раздвојене са __EOU: 1) за једнину, 2) за 2/3/4 јединице, и 3) за 5-10 јединица."
   prompt_remind_translate: "Преведи У ПОТПУНОСТИ текст између маркера."
   api_key_cheap: <api-key>
   api_key_expensive: <api-key>
