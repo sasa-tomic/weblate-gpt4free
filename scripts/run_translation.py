@@ -23,6 +23,7 @@ def main():
             "prompt_extension_flags_max_length"
         ),
         prompt_glossary=config["gpt"].get("prompt_glossary"),
+        prompt_plural=config["gpt"].get("prompt_plural"),
         prompt_remind_translate=config["gpt"].get("prompt_remind_translate"),
         target_lang=target_lang,
         api_key_expensive=config["gpt"].get("api_key_expensive"),

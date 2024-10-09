@@ -6,6 +6,7 @@ import json
 import time
 import g4f
 import g4f.debug
+import sys
 from g4f.cookies import set_cookies_dir, read_cookie_files
 from .cacher import Cacher
 
@@ -23,7 +24,7 @@ TranslationResponse = namedtuple(
 class GPTTranslator:
     def __init__(
         self,
-        #model_cheap="meta-llama/Meta-Llama-3.1-405B-Instruct",
+        # model_cheap="meta-llama/Meta-Llama-3.1-405B-Instruct",
         model_cheap="gpt-4o-mini",
         model_expensive="gpt-4o",
         prompt=None,
@@ -31,6 +32,7 @@ class GPTTranslator:
         prompt_extension_flags_max_length=None,
         prompt_remind_translate=None,
         prompt_glossary=None,
+        prompt_plural=None,
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         api_key_expensive=None,
         api_key_cheap=None,
@@ -49,6 +51,7 @@ class GPTTranslator:
         self.prompt_extension_flags_max_length = prompt_extension_flags_max_length
         self.prompt_remind_translate = prompt_remind_translate
         self.prompt_glossary = prompt_glossary
+        self.prompt_plural = prompt_plural
         self.api_key_expensive = api_key_expensive
         self.api_key_cheap = api_key_cheap
         self.glossary = glossary
@@ -99,6 +102,8 @@ __END
         flags = unit.get("flags", None)
         if flags and "max-length:" in flags:
             result += f"{self.prompt_extension_flags_max_length}: {flags}"
+        if len(unit["source"]) > 1:
+            result += f" {self.prompt_plural}."
         unit_id = unit["id"]
         text = "\n__EOU\n".join(unit["source"])
         result += f"\n/>>B\n{unit_id}: {text}\nE<</"
@@ -201,13 +206,13 @@ __END
             temperature=0.1,
             messages=[{"role": "user", "content": text}],
         )
-        print(raw_response)
 
         results = re.findall(r"/>>B(.+?)E<</", raw_response, re.DOTALL)
         if not results:
             print("Could not find translations in the response")
             print(text)
             print(raw_response)
+            sys.exit(1)
             results, raw_response = "", ""
         return results, raw_response
 
@@ -225,5 +230,6 @@ __END
             print("Could not find translations in the response")
             print(text)
             print(raw_response)
+            sys.exit(1)
             results, raw_response = "", ""
         return results, raw_response
