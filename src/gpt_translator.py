@@ -160,9 +160,9 @@ __END
                             try_expensive = True
                             retry_asking_user_input = False
 
-                new_glossary = re.search(
-                    r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL
-                ) or {}
+                new_glossary = (
+                    re.search(r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL) or {}
+                )
                 if new_glossary:
                     new_glossary = new_glossary.group(1)
                     try:

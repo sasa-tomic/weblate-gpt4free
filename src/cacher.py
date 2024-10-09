@@ -12,7 +12,9 @@ class Cacher:
         """
         translations = []
         for source_string in unit["source"]:
-            translation = self.cache_get_string(source_string)
+            translation = self.cache_get_string(source_string) or self.cache_get_string(
+                source_string.lower()
+            )
             if translation is None:
                 return None
             translations.append(translation)
