@@ -160,15 +160,18 @@ __END
                             try_expensive = True
                             retry_asking_user_input = False
 
-                new_glossary = (
-                    re.search(r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL) or {}
-                )
-                if new_glossary:
-                    new_glossary = new_glossary.group(1)
-                    try:
-                        new_glossary = json.loads(new_glossary)
-                    except ValueError:  # includes simplejson.decoder.JSONDecodeError:
-                        print("Failed to parse new glossary:", new_glossary)
+                if try_expensive:
+                    new_glossary = (
+                        re.search(r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL) or {}
+                    )
+                    if new_glossary:
+                        new_glossary = new_glossary.group(1)
+                        try:
+                            new_glossary = json.loads(new_glossary)
+                        except ValueError:  # includes simplejson.decoder.JSONDecodeError:
+                            print("Failed to parse new glossary:", new_glossary)
+                else:
+                    new_glossary = {}
                 for r in result:
                     if ":" not in r:
                         continue

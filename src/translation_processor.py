@@ -59,6 +59,25 @@ class TranslationProcessor:
             to_translate_total_len += len(unit_to_update["source"])
             if to_translate_total_len > 20000:  # batch size, in chars
                 transl_units, new_glossary = self.gpt_translator.translate(to_translate)
+                if new_glossary:
+                    print(json.dumps(new_glossary, indent=2))
+                    update_glossary = input("Update glossary [y/n]? ").lower()
+                    if update_glossary == "y":
+                        for k, v in new_glossary.items():
+                            if self.cacher.cache_get_string(k):
+                                print("Glossary cache already has an entry for %s" % k)
+                            else:
+                                print("Updating glossary cache %s --> %s" % (k, v))
+                                self.cacher.cache_update_string(k, v)
+                for trans_unit in transl_units.values():
+                    if trans_unit.get("target"):
+                        to_commit.append(trans_unit)
+                to_translate.clear()
+                to_translate_total_len = 0
+
+        if to_translate:
+            transl_units, new_glossary = self.gpt_translator.translate(to_translate)
+            if new_glossary:
                 print(json.dumps(new_glossary, indent=2))
                 update_glossary = input("Update glossary [y/n]? ").lower()
                 if update_glossary == "y":
@@ -68,23 +87,6 @@ class TranslationProcessor:
                         else:
                             print("Updating glossary cache %s --> %s" % (k, v))
                             self.cacher.cache_update_string(k, v)
-                for trans_unit in transl_units.values():
-                    if trans_unit.get("target"):
-                        to_commit.append(trans_unit)
-                to_translate.clear()
-                to_translate_total_len = 0
-
-        if to_translate:
-            transl_units, new_glossary = self.gpt_translator.translate(to_translate)
-            print(json.dumps(new_glossary, indent=2))
-            update_glossary = input("Update glossary [y/n]? ").lower()
-            if update_glossary == "y":
-                for k, v in new_glossary.items():
-                    if self.cacher.cache_get_string(k):
-                        print("Glossary cache already has an entry for %s" % k)
-                    else:
-                        print("Updating glossary cache %s --> %s" % (k, v))
-                        self.cacher.cache_update_string(k, v)
             for trans_unit in transl_units.values():
                 if trans_unit.get("target"):
                     to_commit.append(trans_unit)
