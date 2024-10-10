@@ -13,9 +13,7 @@ class Cacher:
         """
         translations = []
         for source_string in unit["source"]:
-            translation = self.cache_get_string(source_string) or match_complex_case(
-                source_string, self.cache_get_string(source_string.lower())
-            )
+            translation = self.cache_get_string(source_string)
             if translation is None:
                 return None
             translations.append(translation)
@@ -27,6 +25,10 @@ class Cacher:
 
     def cache_get_string(self, key: str):
         value = self.cache.get(key)
+        if value is None and key != key.capitalize():
+            value = match_complex_case(key, self.cache.get(key.capitalize()))
+        if value is None and key != key.lower():
+            value = match_complex_case(key, self.cache.get(key.lower()))
         if value is None:
             return None
         # print("Found cache %s --> %s" % (key, value))
@@ -50,10 +52,14 @@ def match_complex_case(reference_str, target_str):
         else:
             return target_char.lower()
 
+    if len(reference_str) < len(target_str):
+        # target string is longer than the source string
+        # ==> repeat the last char of the source string to match the length of the target string
+        reference_str += reference_str[-1] * (len(target_str) - len(reference_str))
     # Iterate over both strings and apply case based on the reference string
     result = "".join(
         match_char_case(ref_char, target_char)
-        for ref_char, target_char in zip(reference_str, itertools.cycle(target_str))
+        for ref_char, target_char in zip(reference_str, target_str)
     )
 
     return result
