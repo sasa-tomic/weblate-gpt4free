@@ -143,7 +143,7 @@ __END
                     print(raw_response)
 
                     retry_translating = False
-                    retry_asking_user_input = True
+                    retry_asking_user_input = False
                     while retry_asking_user_input:
                         proceed = input(
                             "(1) Retry cheap | (2) retry expensive | (c) continue? [1/2/c] "
