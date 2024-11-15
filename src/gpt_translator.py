@@ -118,29 +118,11 @@ class GPTTranslator:
                 if attempt > 0:
                     print("Retrying...")
 
-                retry_translating = True
-                while retry_translating:
-                    if self.use_cheap:
-                        result, raw_response = self.translate_cheap(input_text)
-                    else:
-                        result, raw_response = self.translate_expensive(input_text)
-                    print(raw_response)
-
-                    retry_translating = False
-                    retry_asking_user_input = False
-                    while retry_asking_user_input:
-                        proceed = input("(1) Retry cheap | (2) retry expensive | (c) continue? [1/2/c] ").lower()
-                        if proceed == "c":
-                            retry_translating = False
-                            retry_asking_user_input = False
-                        elif proceed == "1":
-                            retry_translating = True
-                            self.use_cheap = True
-                            retry_asking_user_input = False
-                        elif proceed == "2":
-                            retry_translating = True
-                            self.use_cheap = False
-                            retry_asking_user_input = False
+                if self.use_cheap:
+                    result, raw_response = self.translate_cheap(input_text)
+                else:
+                    result, raw_response = self.translate_expensive(input_text)
+                print(raw_response)
 
                 if self.use_cheap:
                     new_glossary: dict[str, str] = {}
