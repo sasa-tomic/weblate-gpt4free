@@ -18,7 +18,7 @@ class TranslationProcessor:
         weblate_api_key: str,
         gpt_translator: GPTTranslator,
         cacher: Cacher,
-        use_cheap_translation: bool,
+        gpt_reliable: bool,
         answer_yes: bool,
     ) -> None:
         self.weblate_name = weblate_name
@@ -29,7 +29,7 @@ class TranslationProcessor:
         self.weblate_client: WeblateClient | None = None
         self.gpt_translator: GPTTranslator = gpt_translator
         self.cacher = cacher
-        self.use_cheap_translation = use_cheap_translation
+        self.gpt_reliable = gpt_reliable
         self.answer_yes = answer_yes
 
     def update_weblate_client(self, project: str) -> None:
@@ -154,9 +154,9 @@ class TranslationProcessor:
                 accept_all, unit_to_update = _ask_proceed(unit, accept_all)
                 if not unit_to_update:
                     continue
-                if not self.use_cheap_translation:
+                if self.gpt_reliable:
                     self.cacher.cache_update_unit(unit_to_update)
-                self.weblate_client.update_translation_unit(unit_to_update, is_cheap=self.use_cheap_translation)
+                self.weblate_client.update_translation_unit(unit_to_update, gpt_reliable=self.gpt_reliable)
                 commit_count += 1
             to_commit.clear()
 

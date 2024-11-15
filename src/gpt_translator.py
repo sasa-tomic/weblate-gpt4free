@@ -24,27 +24,29 @@ read_cookie_files(cookies_dir)
 class TranslationResponse:
     translation_units: Dict[str, dict] = field(default_factory=dict)
     new_glossary: Dict[str, str] = field(default_factory=dict)
-    is_cheap_translation: bool = False
+    is_reliable: bool = False
 
 
 class GPTTranslator:
     def __init__(
         self,
-        use_cheap: bool = True,
+        provider_name: str = "Openai",
         model: str = "gpt-4o",
+        api_key: Optional[str] = None,
+        reliable: bool = False,
         prompt: Optional[str] = None,
         prompt_extension_flags_max_length: Optional[str] = None,
         prompt_remind_translate: Optional[str] = None,
         prompt_glossary: Optional[str] = None,
         prompt_plural: Optional[str] = None,
         target_lang: str = "NONE. STOP TRANSLATION - UNSET LANGUAGE!",
-        api_key_expensive: Optional[str] = None,
-        api_key_cheap: Optional[str] = None,
         cacher: Optional[Cacher] = None,
         glossary: Optional[Dict[str, str]] = None,
     ) -> None:
-        self.use_cheap = use_cheap
+        self.provider_name = provider_name
         self.model = model
+        self.api_key = api_key
+        self.reliable = reliable
         self.prompt = prompt or (
             f"Completely translate the following text to {target_lang}, not leaving any of the original "
             "text in the output, and return only the translated text. Make sure to keep the same "
@@ -54,8 +56,6 @@ class GPTTranslator:
         self.prompt_remind_translate = prompt_remind_translate or "Please fully translate"
         self.prompt_glossary = prompt_glossary or "Glossary"
         self.prompt_plural = prompt_plural
-        self.api_key_expensive = api_key_expensive
-        self.api_key_cheap = api_key_cheap
         self.glossary = glossary or {}
         self.cacher = cacher or Cacher(lang="unknown")
 
@@ -118,13 +118,13 @@ class GPTTranslator:
                 if attempt > 0:
                     print("Retrying...")
 
-                if self.use_cheap:
-                    result, raw_response = self.translate_cheap(input_text)
-                else:
-                    result, raw_response = self.translate_expensive(input_text)
+                result, raw_response = self.get_translation(input_text)
+
+                if result:
+                    (result, raw_response) = self.get_grammar_checked(result)
                 print(raw_response)
 
-                if self.use_cheap:
+                if self.reliable:
                     new_glossary: dict[str, str] = {}
                 else:
                     new_glossary_match = re.search(r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL)
@@ -145,7 +145,7 @@ class GPTTranslator:
                         transl_unit["target"] = [t.strip() for t in translation.split("__EOU")]
                         transl_units[unit_id] = transl_unit
                 if transl_units:
-                    return TranslationResponse(transl_units, new_glossary, self.use_cheap)
+                    return TranslationResponse(transl_units, new_glossary, self.reliable)
                 else:
                     print(input_text)
                     print(raw_response)
@@ -156,10 +156,10 @@ class GPTTranslator:
 
         raise Exception(f"Could not translate: {input_text}")
 
-    def translate_cheap(self, text: str) -> Tuple[List[str], str]:
+    def get_translation(self, text: str) -> Tuple[List[str], str]:
         raw_response = g4f.ChatCompletion.create(
-            provider=g4f.Provider.Openai,
-            api_key=self.api_key_cheap,
+            provider=self.provider_name,
+            api_key=self.api_key,
             model=self.model,
             temperature=0.1,
             messages=[{"role": "user", "content": text}],
@@ -174,10 +174,15 @@ class GPTTranslator:
             results, raw_response = [], ""
         return results, raw_response
 
-    def translate_expensive(self, text: str) -> Tuple[List[str], str]:
+    def get_grammar_checked(self, results: list[str]) -> Tuple[List[str], str]:
+        text = (
+            "Please fix grammar and typos in the following text, keeping everything else including " \
+            + "whitespaces, newlines, and other special characters intact:\n\n"
+            + "\n".join([f"\n/>>B\n{r}\nE<</" for r in results])
+        )
         raw_response = g4f.ChatCompletion.create(
-            provider=g4f.Provider.Openai,
-            api_key=self.api_key_expensive,
+            provider=self.provider_name,
+            api_key=self.api_key,
             model=self.model,
             temperature=0.1,
             messages=[{"role": "user", "content": text}],

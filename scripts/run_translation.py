@@ -13,16 +13,12 @@ from src.utils import load_config
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Translate missing strings in a Weblate project using GPT.")
     parser.add_argument(
-        "--model",
+        "--provider",
         type=str,
-        default=None,
-        help="The model name to use for translation. If not provided, the default model will be used.",
-    )
-    parser.add_argument(
-        "--cheap-translation",
-        action="store_true",
-        default=False,
-        help="Use the cheap translation model if available. If not available, the expensive model will be used.",
+        default="default",
+        const="default",
+        nargs="?",
+        help="The provider name from the config.yml file to use for translation.",
     )
     parser.add_argument(
         "--yes",
@@ -38,10 +34,18 @@ def main() -> None:
 
     config = load_config("config/config.yml")
 
-    if args.cheap_translation:
-        model = args.model or config["gpt"]["model_cheap"]
-    else:
-        model = args.model or config["gpt"]["model_expensive"]
+    gpt_provider = config["gpt"]["providers"].get(args.provider)
+    if not gpt_provider:
+        print(f"Unknown GPT provider: {args.provider}. Available providers:")	
+        for provider in config["gpt"]["providers"]:
+            print(provider)
+        print()
+        raise ValueError(f"Unknown GPT provider: {args.provider}")
+
+    gpt_provider_name = gpt_provider.get("provider")
+    gpt_model = gpt_provider["model"]
+    gpt_api_key = gpt_provider.get("api_key")
+    gpt_reliable = gpt_provider.get("reliable", False)
 
     for weblate in config["weblate"]:
         print(f"Processing {weblate['name']}...")
@@ -54,11 +58,11 @@ def main() -> None:
             prompt_plural=config["gpt"].get("prompt_plural"),
             prompt_remind_translate=config["gpt"].get("prompt_remind_translate"),
             target_lang=target_lang,
-            api_key_expensive=config["gpt"].get("api_key_expensive"),
-            api_key_cheap=config["gpt"].get("api_key_cheap"),
             cacher=cacher,
-            model=model,
-            use_cheap=args.cheap_translation,
+            provider_name=gpt_provider_name,
+            model=gpt_model,
+            api_key=gpt_api_key,
+            reliable=gpt_reliable,
         )
         processor = TranslationProcessor(
             weblate_name=weblate["name"],
@@ -68,7 +72,7 @@ def main() -> None:
             weblate_api_key=weblate["api_key"],
             gpt_translator=gpt_translator,
             cacher=cacher,
-            use_cheap_translation=args.cheap_translation,
+            gpt_reliable=gpt_reliable,
             answer_yes=args.yes,
         )
 

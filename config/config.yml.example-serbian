@@ -11,18 +11,18 @@ weblate:
     api_url: https://hosted.weblate.org/api/
     projects:
       # components can be specified as: project/component
-      #- hedy
-      #- kiss
-      #- aniyomi
-      #- chrono
-      #- f-droid
-      #- syncthing
-      #- aidoku
-      #- ubuntu-desktop-translations
-      #- libretorrent
-      #- tenacity
-      #- kinovea
-      #- zrythm
+      - hedy
+      - kiss
+      - aniyomi
+      - chrono
+      - f-droid
+      - syncthing
+      - aidoku
+      - ubuntu-desktop-translations
+      - libretorrent
+      - tenacity
+      - kinovea
+      - zrythm
       - tor
       - databackup
       - weblate
@@ -33,12 +33,29 @@ weblate:
     api_key: <key>  # you can get this at a page like https://hosted.weblate.org/accounts/profile/#api
 
 gpt:
-  model_cheap: gpt-4o-mini
-  model_expensive: gpt-4o
   prompt: "Ти си професионални преводилац са енглеског на српски језик, у ћирилици. Преведи у потпуности задати текст и задржи потпуно исто форматирање као у улазном тексту. Задржи специјалне знакова или знакове интерпункције без измене ако их има на истом месту као у улазном фајлу, али УВЕК преведи СВЕ из остатка текста. Означи почетак превода са '/>>B', а крај превода са 'E<</'. Конзистентно увек користи исту именицу за један појам. Увек задржи оригиналне HTTP или markdown линкове (везе) и форматирање из улазног текста. На крају целог текста генериши нове ставке из улазног текста за глосар, под условом да а) су једноставни термини, б) су у једнини (singular), ц) нису већ излистани у постојећем глосару, a д) су чести термини који би лако могли да се појављују у будућности. Ако има таквих нових глосар ставки додај линију на крају текста: NEW_GLOSSARY: {<JSON мапа original:превод>}"
   prompt_extension_flags_max_length: "Измени превод тако да буде краћи од max-length знакова"
   prompt_glossary: "Користи постојећи глосар у преводу и обавезно га прилагоди по броју и падежу"
   prompt_plural: "У улазном тексту са __EOU су раздвојени стрингови за једнину и множину. У складу са граматиком српског језика, у српском преводу су потребне три такве секције раздвојене са __EOU: а) за једнину, б) за множину са 2,3,4 ставке, и ц) за множину са 5 или више ставки"
   prompt_remind_translate: "Преведи текст између маркера ако није варијабла"
-  api_key_cheap: <api-key>
-  api_key_expensive: <api-key>
+  providers:
+    openai-cheap:
+      provider: Openai
+      api_key: <api-key>
+      model: gpt-4o-mini
+      reliable: False
+    openai-expensive:
+      provider: Openai
+      api_key: <api-key>
+      model: gpt-4o
+      reliable: True
+    deepinfra-cheap:
+      provider: DeepInfra
+      api_key: <api-key>
+      model: "meta-llama/Meta-Llama-3.1-70B-Instruct"
+      reliable: False
+    deepinfra-expensive:
+      provider: DeepInfra
+      api_key: <api-key>
+      model: "meta-llama/Meta-Llama-3.1-405B-Instruct"
+      reliable: False

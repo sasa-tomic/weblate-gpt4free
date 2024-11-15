@@ -116,7 +116,7 @@ class WeblateClient:
                 if results:
                     yield results
 
-    def update_translation_unit(self, translated_unit: dict, is_cheap: bool) -> None:
+    def update_translation_unit(self, translated_unit: dict, gpt_reliable: bool) -> None:
         url = translated_unit["url"]
         # https://docs.weblate.org/en/latest/api.html#put--api-units-(int-id)-
         # state (int) – unit state:
@@ -126,7 +126,7 @@ class WeblateClient:
         #   30 - approved (need review workflow enabled, see Dedicated reviewers)
         # target (array) – target string
         data = {
-            "state": 10 if is_cheap else 20,
+            "state": 20 if gpt_reliable else 10,
             "target": translated_unit["target"],
         }
         try:
