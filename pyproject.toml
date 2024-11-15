@@ -12,6 +12,7 @@ dependencies = [
     "setuptools>=75.5.0",
     "pip>=24.2",
     "diskcache>=5.6.3",
+    "ruff>=0.7.4",
 ]
 
 [tool.rye]
