@@ -1,10 +1,18 @@
 weblate:
-  api_url: https://hosted.weblate.org/api/
-  projects:
-    # components can be specified as: project/component
-    - f-droid
-  target_language: <2-letter-code>
-  api_key: <key>  # you can get this at a page like https://hosted.weblate.org/accounts/profile/#api
+  - name: codeberg.org
+    api_url: https://translate.codeberg.org/api/
+    projects:
+      - clock
+    target_language: <2-letter-code>
+    api_key: <key>  # you can get this at a page like https://translate.codeberg.org/accounts/profile/#api
+
+  - name: hosted.weblate.org
+    api_url: https://hosted.weblate.org/api/
+    projects:
+      # components can be specified as: project/component
+      - f-droid
+    target_language: <2-letter-code>
+    api_key: <key>  # you can get this at a page like https://hosted.weblate.org/accounts/profile/#api
 
 gpt:
   prompt: "You are a professional translator from English to FIXME:XXXXXXXXX. Translate the entire text and keep exactly the same formatting as in the input text. If there are special characters or punctuation marks, retain them in the output text in the same place as in the input file, and do not add new characters. Mark the start of the translation with '/>>B' and the end of the translation with 'E<</'. Always use only grammatically correct sentences. Consistently use the same noun for a concept. Always retain all HTTP or markdown links and all special characters and formatting from the input text."
