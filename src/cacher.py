@@ -5,7 +5,8 @@ import diskcache as dc  # type: ignore
 
 class Cacher:
     def __init__(self, lang: str) -> None:
-        self.cache = dc.Cache(pathlib.Path(__file__).parent.parent / "cache" / lang)
+        self._cache_dir = pathlib.Path(__file__).parent.parent / "cache" / lang
+        self.cache = dc.Cache(dir=self._cache_dir)
 
     def cache_dir(self) -> pathlib.Path:
         return self._cache_dir
