@@ -30,7 +30,6 @@ class GPTTranslator:
         model_cheap="gpt-4o-mini",
         model_expensive="gpt-4o",
         prompt=None,
-        prompt_extension_previous_translation=None,
         prompt_extension_flags_max_length=None,
         prompt_remind_translate=None,
         prompt_glossary=None,
@@ -46,9 +45,6 @@ class GPTTranslator:
         self.prompt = (
             prompt
             or f"Completely translate the following text to {target_lang}, not leaving any of the original text in the output, and return only the translated text. Make sure to keep the same formatting that the original text has"
-        )
-        self.prompt_extension_previous_translation = (
-            prompt_extension_previous_translation or "Previous translation"
         )
         self.prompt_extension_flags_max_length = prompt_extension_flags_max_length
         self.prompt_remind_translate = prompt_remind_translate
@@ -88,17 +84,6 @@ class GPTTranslator:
 
     def _prepare_one(self, unit):
         result = ""
-        previous_translation = [t for t in unit.get("target", []) if t.strip()]
-        if previous_translation and False:
-            result += """
-{prompt_extension_previous_translation}:
-__BEGIN
-{previous_translation}
-__END
-""".format(
-                prompt_extension_previous_translation=self.prompt_extension_previous_translation,
-                previous_translation=previous_translation,
-            )
         result += (self.prompt_remind_translate.strip() + " ") or ""
 
         flags = unit.get("flags", None)

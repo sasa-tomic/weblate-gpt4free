@@ -18,9 +18,6 @@ def main():
         cacher = Cacher(lang=target_lang)
         gpt_translator = GPTTranslator(
             prompt=config["gpt"]["prompt"],
-            prompt_extension_previous_translation=config["gpt"].get(
-                "prompt_extension_previous_translation"
-            ),
             prompt_extension_flags_max_length=config["gpt"].get(
                 "prompt_extension_flags_max_length"
             ),
