@@ -59,3 +59,7 @@ gpt:
       api_key: <api-key>
       model: "meta-llama/Meta-Llama-3.1-405B-Instruct"
       reliable: False
+    liaobots:
+      provider: Liaobots
+      model: gpt-4o
+      reliable: False
