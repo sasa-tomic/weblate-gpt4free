@@ -46,12 +46,10 @@ def main() -> None:
     for weblate in config["weblate"]:
         print(f"Processing {weblate['name']}...")
         target_lang = weblate["target_language"]
-        cacher = Cacher(lang=target_lang)	
+        cacher = Cacher(lang=target_lang)
         gpt_translator = GPTTranslator(
             prompt=config["gpt"]["prompt"],
-            prompt_extension_flags_max_length=config["gpt"].get(
-                "prompt_extension_flags_max_length"
-            ),
+            prompt_extension_flags_max_length=config["gpt"].get("prompt_extension_flags_max_length"),
             prompt_glossary=config["gpt"].get("prompt_glossary"),
             prompt_plural=config["gpt"].get("prompt_plural"),
             prompt_remind_translate=config["gpt"].get("prompt_remind_translate"),

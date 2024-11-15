@@ -1,32 +1,36 @@
 import datetime
-from .cacher import Cacher
-from .weblate_client import WeblateClient
-import editor
 import sys
-import json
+
+import editor  # type: ignore
+
+from .cacher import Cacher
+from .gpt_translator import GPTTranslator, TranslationResponse
+from .weblate_client import WeblateClient
 
 
 class TranslationProcessor:
     def __init__(
         self,
-        weblate_name,
-        api_url,
-        projects,
-        target_lang,
-        weblate_api_key,
-        gpt_translator,
+        api_url: str,
+        projects: list[str],
+        target_lang: str,
+        weblate_api_key: str,
+        gpt_translator: GPTTranslator,
         cacher: Cacher,
-    ):
-        self.weblate_name = weblate_name
+        use_cheap_translation: bool,
+        answer_yes: bool,
+    ) -> None:
         self.api_url = api_url
         self.projects = projects
         self.target_lang = target_lang
         self.weblate_api_key = weblate_api_key
-        self.weblate_client = None
-        self.gpt_translator = gpt_translator
+        self.weblate_client: WeblateClient | None = None
+        self.gpt_translator: GPTTranslator = gpt_translator
         self.cacher = cacher
+        self.use_cheap_translation = use_cheap_translation
+        self.answer_yes = answer_yes
 
-    def update_weblate_client(self, project):
+    def update_weblate_client(self, project: str) -> None:
         self.weblate_client = WeblateClient(
             api_url=self.api_url,
             project=project,
@@ -34,8 +38,7 @@ class TranslationProcessor:
             weblate_api_key=self.weblate_api_key,
         )
 
-    def process_incomplete_translations(self):
-        # Mark and skip the recently fully completed projects
+    def process_incomplete_translations(self) -> None:
         for project in self.projects:
             if self._project_completed_recently(project):
                 print(
@@ -45,6 +48,9 @@ class TranslationProcessor:
                 continue
             print("Processing project[/component]:", project)
             self.update_weblate_client(project)
+            if self.weblate_client is None:
+                print("ERROR: self.weblate_client is not set")
+                return
             for trans_units in self.weblate_client.get_translation_units(
                 self.weblate_client.components, only_incomplete=True
             ):
@@ -52,7 +58,7 @@ class TranslationProcessor:
                     self._process_translation(trans_units)
             self._mark_project_completed(project)
 
-    def _project_completed_recently(self, project):
+    def _project_completed_recently(self, project: str) -> bool:
         cache_dir = self.cacher.cache_dir() / self.weblate_name
         cache_dir.mkdir(exist_ok=True, parents=True)
         path = cache_dir / (project + ".completed")
@@ -64,18 +70,21 @@ class TranslationProcessor:
                 print("Project completion expired:", project)
         return False
 
-    def _mark_project_completed(self, project):
+    def _mark_project_completed(self, project: str) -> None:
         cache_dir = self.cacher.cache_dir() / self.weblate_name
         cache_dir.mkdir(exist_ok=True, parents=True)
         path = cache_dir / (project + ".completed")
         print("Marking project as completed:", project)
         path.touch()
 
-    def _process_translation(self, trans_units: list[dict]):
+    def _process_translation(self, trans_units: list[dict]) -> None:
         print("Processing %d incomplete translations..." % len(trans_units))
-        to_translate = []
+        to_translate: list[dict] = []
         to_translate_total_len = 0  # Prompt length assumption
-        to_commit = []
+        to_commit: list[dict] = []
+        if self.weblate_client is None:
+            print("ERROR: self.weblate_client is not set")
+            return
         if self.weblate_client.glossary:
             self.gpt_translator.set_glossary(self.weblate_client.glossary)
         for unit_to_update in trans_units:
@@ -87,42 +96,45 @@ class TranslationProcessor:
             to_translate.append(unit_to_update)
             to_translate_total_len += len(unit_to_update["source"])
             if to_translate_total_len > 20000:  # batch size, in chars
-                transl_units, new_glossary = self.gpt_translator.translate(to_translate)
-                if new_glossary:
-                    print(json.dumps(new_glossary, indent=2))
-                    update_glossary = input("Update glossary [y/n]? ").lower()
+                transl_part: TranslationResponse = self.gpt_translator.translate(to_translate)
+                if transl_part.new_glossary:
+                    print("New glossary:")
+                    for k, v in transl_part.new_glossary.items():
+                        print(f"  {k} --> {v}")
+                    update_glossary = self.answer_yes or input("Update glossary [y/n]? ").lower()
                     if update_glossary == "y":
-                        for k, v in new_glossary.items():
+                        for k, v in transl_part.new_glossary.items():
                             if self.cacher.cache_get_string(k):
-                                print("Glossary cache already has an entry for %s" % k)
+                                print(f"Glossary cache already has an entry for {k}")
                             else:
-                                print("Updating glossary cache %s --> %s" % (k, v))
+                                print(f"Updating glossary cache {k} --> {v}")
                                 self.cacher.cache_update_string(k, v)
-                for trans_unit in transl_units.values():
+                for trans_unit in transl_part.translation_units.values():
                     if trans_unit.get("target"):
                         to_commit.append(trans_unit)
                 to_translate.clear()
                 to_translate_total_len = 0
 
         if to_translate:
-            transl_units, new_glossary = self.gpt_translator.translate(to_translate)
-            if new_glossary:
-                print(json.dumps(new_glossary, indent=2))
-                update_glossary = input("Update glossary [y/n]? ").lower()
+            transl_final: TranslationResponse = self.gpt_translator.translate(to_translate)
+            if transl_final.new_glossary:
+                for k, v in transl_final.new_glossary.items():
+                    print(f"  {k} --> {v}")
+                update_glossary = self.answer_yes or input("Update glossary [y/n]? ").lower()
                 if update_glossary == "y":
-                    for k, v in new_glossary.items():
+                    for k, v in transl_final.new_glossary.items():
                         if self.cacher.cache_get_string(k):
-                            print("Glossary cache already has an entry for %s" % k)
+                            print(f"Glossary cache already has an entry for {k}")
                         else:
-                            print("Updating glossary cache %s --> %s" % (k, v))
+                            print(f"Updating glossary cache {k} --> {v}")
                             self.cacher.cache_update_string(k, v)
-            for trans_unit in transl_units.values():
+            for trans_unit in transl_final.translation_units.values():
                 if trans_unit.get("target"):
                     to_commit.append(trans_unit)
 
         commit_count = 0
         if to_commit:
-            accept_all = None
+            accept_all = "y" if self.answer_yes else None
             print(">" * 80)
             print("> Here is the entire translation")
             print(">" * 80)
@@ -140,8 +152,9 @@ class TranslationProcessor:
                 accept_all, unit_to_update = _ask_proceed(unit, accept_all)
                 if not unit_to_update:
                     continue
-                self.cacher.cache_update_unit(unit_to_update)
-                self.weblate_client.update_translation_unit(unit_to_update)
+                if not self.use_cheap_translation:
+                    self.cacher.cache_update_unit(unit_to_update)
+                self.weblate_client.update_translation_unit(unit_to_update, is_cheap=self.use_cheap_translation)
                 commit_count += 1
             to_commit.clear()
 
@@ -152,7 +165,7 @@ class TranslationProcessor:
         )
 
 
-def _print_one(unit: dict):
+def _print_one(unit: dict) -> None:
     print()
     print("*" * 80)
     print("Unit web URL:", unit["web_url"])
@@ -162,22 +175,18 @@ def _print_one(unit: dict):
     print("\n".join(unit["target"]))
 
 
-def _ask_proceed(unit: dict, accept_all: str) -> tuple[str, dict]:
+def _ask_proceed(unit: dict, accept_all: str | None) -> tuple[str | None, dict]:
     while True:
         _print_one(unit)
         if accept_all:
             proceed = accept_all
         else:
-            proceed = input(
-                "Submit yes/no/edit/all/skip all/quit [y/n/e/all/skip/q]? "
-            ).lower()
+            proceed = input("Submit yes/no/edit/all/skip all/quit [y/n/e/all/skip/q]? ").lower()
         if proceed == "q":
             sys.exit(0)
         elif proceed == "e":
             s = "\n__EOU\n".join(unit["target"])
-            unit["target"] = (
-                editor.edit(contents=s).decode("utf-8").strip().split("\n__EOU\n")
-            )
+            unit["target"] = editor.edit(contents=s).decode("utf-8").strip().split("\n__EOU\n")
         elif proceed == "all":
             accept_all = "y"
             break
@@ -187,5 +196,5 @@ def _ask_proceed(unit: dict, accept_all: str) -> tuple[str, dict]:
         elif proceed == "y":
             break
         elif proceed == "n":
-            return (accept_all, None)
+            return (accept_all, {})
     return (accept_all, unit)
