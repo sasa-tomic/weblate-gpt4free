@@ -11,6 +11,7 @@ from .weblate_client import WeblateClient
 class TranslationProcessor:
     def __init__(
         self,
+        weblate_name: str,
         api_url: str,
         projects: list[str],
         target_lang: str,
@@ -20,6 +21,7 @@ class TranslationProcessor:
         use_cheap_translation: bool,
         answer_yes: bool,
     ) -> None:
+        self.weblate_name = weblate_name
         self.api_url = api_url
         self.projects = projects
         self.target_lang = target_lang
