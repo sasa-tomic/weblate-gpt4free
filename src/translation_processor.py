@@ -38,7 +38,10 @@ class TranslationProcessor:
         # Mark and skip the recently fully completed projects
         for project in self.projects:
             if self._project_completed_recently(project):
-                print("Skipping project[/component] since it was completed recently:", project)
+                print(
+                    "Skipping project[/component] since it was completed recently:",
+                    project,
+                )
                 continue
             print("Processing project[/component]:", project)
             self.update_weblate_client(project)

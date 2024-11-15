@@ -38,7 +38,7 @@ class GPTTranslator:
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         api_key_expensive=None,
         api_key_cheap=None,
-        cacher: Cacher|None = None,
+        cacher: Cacher | None = None,
         glossary=None,
     ):
         self.model_cheap = model_cheap
@@ -164,13 +164,16 @@ __END
 
                 if try_expensive:
                     new_glossary = (
-                        re.search(r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL) or {}
+                        re.search(r"NEW_GLOSSARY: ({.+?})", raw_response, re.DOTALL)
+                        or {}
                     )
                     if new_glossary:
                         new_glossary = new_glossary.group(1)
                         try:
                             new_glossary = json.loads(new_glossary)
-                        except ValueError:  # includes simplejson.decoder.JSONDecodeError:
+                        except (
+                            ValueError
+                        ):  # includes simplejson.decoder.JSONDecodeError:
                             print("Failed to parse new glossary:", new_glossary)
                 else:
                     new_glossary = {}
