@@ -5,7 +5,11 @@ import diskcache as dc
 
 class Cacher:
     def __init__(self, lang: str):
-        self.cache = dc.Cache(pathlib.Path(__file__).parent.parent / "cache" / lang)
+        self._cache_dir = pathlib.Path(__file__).parent.parent / "cache" / lang
+        self.cache = dc.Cache(self._cache_dir)
+
+    def cache_dir(self):
+        return self._cache_dir
 
     def cache_get_unit(self, unit: dict):
         """

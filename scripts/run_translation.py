@@ -33,6 +33,7 @@ def main():
             cacher=cacher,
         )
         processor = TranslationProcessor(
+            weblate_name=weblate["name"],
             api_url=weblate["api_url"],
             projects=weblate["projects"],
             target_lang=target_lang,

@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-from collections import namedtuple
+import json
 import os.path
 import re
-import json
+import sys
 import time
+from collections import namedtuple
+
 import g4f
 import g4f.debug
-import sys
-from g4f.cookies import set_cookies_dir, read_cookie_files
+from g4f.cookies import read_cookie_files, set_cookies_dir
+
 from .cacher import Cacher
 
 g4f.debug.logging = True
@@ -36,8 +38,8 @@ class GPTTranslator:
         target_lang="NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         api_key_expensive=None,
         api_key_cheap=None,
-        cacher: Cacher = Cacher(lang="unknown"),
-        glossary={},
+        cacher: Cacher|None = None,
+        glossary=None,
     ):
         self.model_cheap = model_cheap
         self.model_expensive = model_expensive
@@ -54,8 +56,8 @@ class GPTTranslator:
         self.prompt_plural = prompt_plural
         self.api_key_expensive = api_key_expensive
         self.api_key_cheap = api_key_cheap
-        self.glossary = glossary
-        self.cacher = cacher
+        self.glossary = glossary or {}
+        self.cacher = cacher or Cacher(lang="unknown")
 
     def set_glossary(self, glossary: dict[str, str]):
         """Set glossary (dict of word -> translation) for all translations, will be used in the prompt."""

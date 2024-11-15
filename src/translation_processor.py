@@ -1,3 +1,4 @@
+import datetime
 from .cacher import Cacher
 from .weblate_client import WeblateClient
 import editor
@@ -8,6 +9,7 @@ import json
 class TranslationProcessor:
     def __init__(
         self,
+        weblate_name,
         api_url,
         projects,
         target_lang,
@@ -15,6 +17,7 @@ class TranslationProcessor:
         gpt_translator,
         cacher: Cacher,
     ):
+        self.weblate_name = weblate_name
         self.api_url = api_url
         self.projects = projects
         self.target_lang = target_lang
@@ -32,15 +35,38 @@ class TranslationProcessor:
         )
 
     def process_incomplete_translations(self):
+        # Mark and skip the recently fully completed projects
         for project in self.projects:
+            if self._project_completed_recently(project):
+                print("Skipping project[/component] since it was completed recently:", project)
+                continue
             print("Processing project[/component]:", project)
             self.update_weblate_client(project)
             for trans_units in self.weblate_client.get_translation_units(
                 self.weblate_client.components, only_incomplete=True
             ):
-                if not trans_units:
-                    continue
-                self._process_translation(trans_units)
+                if trans_units:
+                    self._process_translation(trans_units)
+            self._mark_project_completed(project)
+
+    def _project_completed_recently(self, project):
+        cache_dir = self.cacher.cache_dir() / self.weblate_name
+        cache_dir.mkdir(exist_ok=True, parents=True)
+        path = cache_dir / (project + ".completed")
+        if path.exists():
+            filetime = datetime.datetime.fromtimestamp(path.stat().st_mtime)
+            if filetime > datetime.datetime.now() - datetime.timedelta(days=1):
+                return True
+            else:
+                print("Project completion expired:", project)
+        return False
+
+    def _mark_project_completed(self, project):
+        cache_dir = self.cacher.cache_dir() / self.weblate_name
+        cache_dir.mkdir(exist_ok=True, parents=True)
+        path = cache_dir / (project + ".completed")
+        print("Marking project as completed:", project)
+        path.touch()
 
     def _process_translation(self, trans_units: list[dict]):
         print("Processing %d incomplete translations..." % len(trans_units))
