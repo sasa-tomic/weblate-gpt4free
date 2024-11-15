@@ -13,7 +13,31 @@ dependencies = [
     "pip>=24.2",
     "diskcache>=5.6.3",
     "ruff>=0.7.4",
+    "mypy>=1.13.0",
+    "types-pyyaml>=6.0.12.20240917",
+    "types-requests>=2.32.0.20241016",
 ]
 
 [tool.rye]
 virtual = true
+
+[tool.ruff]
+lint.select = [
+    # annotations
+    "ANN",
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+# lint.ignore = ["E501", "W291", "W292", "W293", "T201", "C901"]
+lint.ignore = ["ANN101"]
+line-length = 120
