@@ -176,8 +176,9 @@ class GPTTranslator:
 
     def get_grammar_checked(self, results: list[str]) -> Tuple[List[str], str]:
         text = (
-            "Please fix grammar and typos in the following text, keeping everything else including " \
-            + "whitespaces, newlines, and other special characters intact:\n\n"
+            "Please fix grammar and typos in the following text and adjust the words picked "
+            + "in sentences to bring sentences in line with the commonly used modern language, but keep the same "
+            + "alphabet and everything else including whitespaces, newlines, and other special characters intact:\n\n"
             + "\n".join([f"\n/>>B\n{r}\nE<</" for r in results])
         )
         raw_response = g4f.ChatCompletion.create(
