@@ -147,16 +147,14 @@ class TranslationProcessor:
             print("!" * 80)
             for unit in to_commit:
                 cached_translation_target = self.cacher.cache_get_unit(unit)
-                if unit["target"] == cached_translation_target == unit["source"]:
-                    # User confirmed that the source and target are the same
-                    print("Skipping translation of unit with no changes")
-                    continue
                 accept_all, unit_to_update = _ask_proceed(unit, accept_all)
                 if not unit_to_update:
                     continue
                 if self.gpt_reliable:
                     self.cacher.cache_update_unit(unit_to_update)
-                self.weblate_client.update_translation_unit(unit_to_update, gpt_reliable=self.gpt_reliable)
+                self.weblate_client.update_translation_unit(
+                    unit_to_update, gpt_reliable=self.gpt_reliable, auto_approved=self.answer_yes
+                )
                 commit_count += 1
             to_commit.clear()
 
