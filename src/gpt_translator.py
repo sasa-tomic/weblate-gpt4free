@@ -5,11 +5,12 @@ import re
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Optional
 
 import g4f  # type: ignore
 import g4f.debug  # type: ignore
 from g4f.cookies import read_cookie_files, set_cookies_dir  # type: ignore
+from openai import OpenAI
 
 from .cacher import Cacher
 
@@ -22,8 +23,8 @@ read_cookie_files(cookies_dir)
 
 @dataclass
 class TranslationResponse:
-    translation_units: Dict[str, dict] = field(default_factory=dict)
-    new_glossary: Dict[str, str] = field(default_factory=dict)
+    translation_units: dict[str, dict] = field(default_factory=dict)
+    new_glossary: dict[str, str] = field(default_factory=dict)
     is_reliable: bool = False
 
 
@@ -41,7 +42,7 @@ class GPTTranslator:
         prompt_plural: Optional[str] = None,
         target_lang: str = "NONE. STOP TRANSLATION - UNSET LANGUAGE!",
         cacher: Optional[Cacher] = None,
-        glossary: Optional[Dict[str, str]] = None,
+        glossary: Optional[dict[str, str]] = None,
     ) -> None:
         self.provider_name = provider_name
         self.model = model
@@ -59,12 +60,12 @@ class GPTTranslator:
         self.glossary = glossary or {}
         self.cacher = cacher or Cacher(lang="unknown")
 
-    def set_glossary(self, glossary: Dict[str, str]) -> None:
+    def set_glossary(self, glossary: dict[str, str]) -> None:
         """Set glossary (dict of word -> translation) for all translations, will be used in the prompt."""
         self.glossary = glossary
 
-    def get_glossary_prompt(self, units: List[Dict]) -> str:
-        used_glossary: Dict[str, str] = {}
+    def get_glossary_prompt(self, units: list[dict]) -> str:
+        used_glossary: dict[str, str] = {}
         for unit in units:
             unit_source = " ".join(unit["source"]).lower()
             for term in self.glossary:
@@ -84,7 +85,7 @@ class GPTTranslator:
             return self.prompt_glossary + ": " + "; ".join(used_glossary.values()) + "\n"
         return ""
 
-    def _prepare_one(self, unit: Dict) -> str:
+    def _prepare_one(self, unit: dict) -> str:
         result = ""
         result += (self.prompt_remind_translate.strip() + " ") or ""
 
@@ -156,55 +157,8 @@ class GPTTranslator:
 
         raise Exception(f"Could not translate: {input_text}")
 
-    def get_translation(self, text: str) -> Tuple[List[str], str]:
-        if self.provider_name.lower() == "openai":
-            from openai import OpenAI
-
-            client = OpenAI(api_key=self.api_key)
-            raw_response = client.chat.completions.create(
-                messages=[
-                    {
-                        "role": "user",
-                        "content": text,
-                    }
-                ],
-                model=self.model,
-                temperature=0.1,
-            )
-        else:
-            raw_response = g4f.ChatCompletion.create(
-                provider=self.provider_name,
-                api_key=self.api_key,
-                model=self.model,
-                temperature=0.1,
-                messages=[{"role": "user", "content": text}],
-            )
-        raw_response_str = str(raw_response)
-
-        results = re.findall(r"/>>B(.+?)E<</", raw_response_str, re.DOTALL)
-        if not results:
-            print("Could not find translations in the response")
-            print(text)
-            print(raw_response_str)
-            sys.exit(1)
-            results, raw_response = [], ""
-        return results, raw_response_str
-
-    def get_grammar_checked(self, results: list[str]) -> Tuple[List[str], str]:
-        text = (
-            "Please fix grammar and typos in the following text and change word synonyms if needed to bring sentences "
-            + "in line with the most commonly used modern forms of the language, but do not alter the language, alphabet, "
-            + "whitespaces, newlines, and other special characters:\n\n"
-            + "\n".join([f"\n/>>B\n{r}\nE<</" for r in results])
-        )
-        raw_response = g4f.ChatCompletion.create(
-            provider=self.provider_name,
-            api_key=self.api_key,
-            model=self.model,
-            temperature=0.1,
-            messages=[{"role": "user", "content": text}],
-        )
-
+    def get_translation(self, text: str) -> tuple[list[str], str]:
+        raw_response = str(gpt_chat_create(self.provider_name, self.model, self.api_key, text) or "")
         results = re.findall(r"/>>B(.+?)E<</", raw_response, re.DOTALL)
         if not results:
             print("Could not find translations in the response")
@@ -213,3 +167,44 @@ class GPTTranslator:
             sys.exit(1)
             results, raw_response = [], ""
         return results, raw_response
+
+    def get_grammar_checked(self, results: list[str]) -> tuple[list[str], str]:
+        text = (
+            "Please fix grammar and typos in the following text and change word synonyms if needed to bring sentences "
+            + "in line with the most commonly used modern forms of the language, but do not alter the language, alphabet, "
+            + "whitespaces, newlines, and other special characters:\n\n"
+            + "\n".join([f"\n/>>B\n{r}\nE<</" for r in results])
+        )
+        raw_response = str(gpt_chat_create(self.provider_name, self.model, self.api_key, text) or "")
+        results = re.findall(r"/>>B(.+?)E<</", raw_response, re.DOTALL)
+        if not results:
+            print("Could not find translations in the response")
+            print(text)
+            print(raw_response)
+            sys.exit(1)
+            results, raw_response = [], ""
+        return results, raw_response
+
+
+def gpt_chat_create(provider_name: str, model: str, api_key: str | None, text: str) -> str | None:
+    if provider_name.lower() == "openai":
+        client = OpenAI(api_key=api_key)
+        completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": text,
+                }
+            ],
+            model=model,
+            temperature=0.1,
+        )
+    else:
+        completion = g4f.ChatCompletion.create(
+            provider=provider_name,
+            api_key=api_key,
+            model=model,
+            temperature=0.1,
+            messages=[{"role": "user", "content": text}],
+        )
+    return completion.choices[0].message.content
