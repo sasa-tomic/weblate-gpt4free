@@ -157,22 +157,38 @@ class GPTTranslator:
         raise Exception(f"Could not translate: {input_text}")
 
     def get_translation(self, text: str) -> Tuple[List[str], str]:
-        raw_response = g4f.ChatCompletion.create(
-            provider=self.provider_name,
-            api_key=self.api_key,
-            model=self.model,
-            temperature=0.1,
-            messages=[{"role": "user", "content": text}],
-        )
+        if self.provider_name.lower() == "openai":
+            from openai import OpenAI
 
-        results = re.findall(r"/>>B(.+?)E<</", raw_response, re.DOTALL)
+            client = OpenAI(api_key=self.api_key)
+            raw_response = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "user",
+                        "content": text,
+                    }
+                ],
+                model=self.model,
+                temperature=0.1,
+            )
+        else:
+            raw_response = g4f.ChatCompletion.create(
+                provider=self.provider_name,
+                api_key=self.api_key,
+                model=self.model,
+                temperature=0.1,
+                messages=[{"role": "user", "content": text}],
+            )
+        raw_response_str = str(raw_response)
+
+        results = re.findall(r"/>>B(.+?)E<</", raw_response_str, re.DOTALL)
         if not results:
             print("Could not find translations in the response")
             print(text)
-            print(raw_response)
+            print(raw_response_str)
             sys.exit(1)
             results, raw_response = [], ""
-        return results, raw_response
+        return results, raw_response_str
 
     def get_grammar_checked(self, results: list[str]) -> Tuple[List[str], str]:
         text = (
