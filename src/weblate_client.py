@@ -1,4 +1,4 @@
-from typing import Generator
+from collections.abc import Generator
 from urllib.parse import urljoin
 
 import requests
@@ -71,13 +71,13 @@ class WeblateClient:
         # FIXME: pagination of components not yet implemented
         components = response.get("results", [])
         if filter_glossary:
-            components = [c["slug"] for c in components if c.get("is_glossary", False)]
+            components = [c["url"].split("/")[-2] for c in components if c.get("is_glossary", False)]
         else:
-            components = [c["slug"] for c in components]
+            components = [c["url"].split("/")[-2] for c in components]
         return components
 
     def set_incomplete_page_size(self, size: int) -> None:
-        print("Setting incomplete page size to %d" % size)
+        print(f"Setting incomplete page size to {size}")
         self._incomplete_page_size = size
 
     @property
