@@ -1,4 +1,5 @@
 import datetime
+import re
 import sys
 
 import editor  # type: ignore
@@ -43,21 +44,27 @@ class TranslationProcessor:
     def process_incomplete_translations(self) -> None:
         for project in self.projects:
             if self._project_completed_recently(project):
-                print(
-                    "Skipping project[/component] since it was completed recently:",
-                    project,
-                )
+                print("Skipping project since it was recently completed:", project)
                 continue
-            print("Processing project[/component]:", project)
             self.update_weblate_client(project)
             if self.weblate_client is None:
                 print("ERROR: self.weblate_client is not set")
                 return
-            for trans_units in self.weblate_client.get_translation_units(
+            for component, trans_units, has_more in self.weblate_client.get_translation_units(
                 self.weblate_client.components, only_incomplete=True
             ):
+                print(f"Processing project: {project} and component {component}")
                 if trans_units:
                     self._process_translation(trans_units)
+                if self.answer_yes and not has_more:
+                    # Notify user and ask for user input to continue
+                    print("Completed component:", component)
+                    # Example review URL:
+                    # https://hosted.weblate.org/zen/tor/tor-browser/tb-android/sr/?offset=0&q=state%3Aneeds-editing&sort_by=last_updated&checksum=
+                    base_url = re.sub(r"/translate/", "/zen/", trans_units[-1]["web_url"])
+                    base_url = re.sub(r"\?checksum=[a-zA-Z0-9]+", "", base_url)
+                    print(f"Review changes at: {base_url}?q=state%3Aneeds-editing&sort_by=last_updated")
+                    input("Press enter to continue...")
             self._mark_project_completed(project)
 
     def _project_completed_recently(self, project: str) -> bool:

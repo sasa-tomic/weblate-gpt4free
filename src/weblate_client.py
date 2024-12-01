@@ -47,7 +47,7 @@ class WeblateClient:
         response = request_with_type(url, headers=headers, **kwargs)
         if response.status_code > 299:
             print("!" * 80)
-            print("ERROR Response (%d): " % response.status_code, response.text)
+            print(f"ERROR Response ({response.status_code}): {response.text}")
             print(f"URL: {url}")
             print("!" * 80)
         # response.raise_for_status()
@@ -57,13 +57,13 @@ class WeblateClient:
         print("Rebuilding glossary...")
         self.glossary = {}
         # Get all the glossary units by converting them from an iterator to a list
-        glossary_units = list(self.get_translation_units(self.glossary_components, only_translated=True))
-        if glossary_units:
-            for unit in glossary_units[0]:
-                for src, tgt in zip(unit["source"], unit["target"]):
-                    # Key is lowercased source, value is source + ": " + target
-                    self.glossary[src.lower()] = f"{src}: {tgt or src}"
-            print(f"Found {len(self.glossary)} glossary entries in {len(self.glossary_components)} components")
+        for component, glossary_units, _ in self.get_translation_units(self.glossary_components, only_translated=True):
+            if glossary_units:
+                for unit in glossary_units:
+                    for src, tgt in zip(unit["source"], unit["target"]):
+                        # Key is lowercased source, value is source + ": " + target
+                        self.glossary[src.lower()] = f"{src}: {tgt or src}"
+                print(f"Found {len(self.glossary)} glossary entries in component {component}")
 
     def get_project_components(self, filter_glossary: bool = False) -> list[str]:
         endpoint = f"projects/{self.project}/components/"
@@ -86,35 +86,38 @@ class WeblateClient:
 
     def get_translation_units(
         self, components: list[str], only_translated: bool = False, only_incomplete: bool = False
-    ) -> Generator[list[dict], None, None]:
+    ) -> Generator[tuple[str, list[dict], bool], None, None]:
         for component in components:
             self._incomplete_page_size = self.default_incomplete_page_size
             has_more = True
-            page = 0
+            page = 1
             while has_more:
                 endpoint = f"translations/{self.project}/{component}/{self.target_lang}/units/"
+
+                # Determine query parameters
                 if only_translated:
-                    params = {
-                        "q": "state:>=translated",
-                        "page_size": 1000,
-                    }
-                    if page > 0:
-                        params["page"] = page
+                    params = {"q": "state:>=translated", "page_size": 1000, "page": page}
                 elif only_incomplete:
                     params = {
                         "q": "state:<translated AND (changed:<yesterday OR state:empty)",
                         "page_size": self._incomplete_page_size,
+                        "page": page,
                     }
                 else:
-                    params = {"page_size": 200}
+                    params = {"page_size": 200, "page": page}
+
+                # Make the API request
                 res = self._make_request(endpoint, req_type="get", params=params)
-                if res.get("next"):
+
+                # Check if there are more pages
+                has_more = bool(res.get("next"))
+                if has_more:
                     page += 1
-                else:
-                    has_more = False
-                results = res.get("results")
+
+                # Process and yield results
+                results = res.get("results", [])
                 if results:
-                    yield results
+                    yield (component, results, has_more)
 
     def update_translation_unit(self, translated_unit: dict, gpt_reliable: bool, auto_approved: bool) -> None:
         url = translated_unit["url"]
