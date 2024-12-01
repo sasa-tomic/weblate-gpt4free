@@ -87,7 +87,7 @@ class TranslationProcessor:
         path.touch()
 
     def _process_translation(self, trans_units: list[dict]) -> None:
-        print("Processing %d incomplete translations..." % len(trans_units))
+        print(f"Processing {len(trans_units)} incomplete translations...")
         to_translate: list[dict] = []
         to_translate_total_len = 0  # Prompt length assumption
         to_commit: list[dict] = []
