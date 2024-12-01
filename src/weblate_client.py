@@ -90,21 +90,26 @@ class WeblateClient:
         for component in components:
             self._incomplete_page_size = self.default_incomplete_page_size
             has_more = True
-            page = 1
+            page = 0
             while has_more:
                 endpoint = f"translations/{self.project}/{component}/{self.target_lang}/units/"
 
                 # Determine query parameters
                 if only_translated:
-                    params = {"q": "state:>=translated", "page_size": 1000, "page": page}
+                    params = {"q": "state:>=translated", "page_size": 1000}
+                    if page > 0:
+                        params["page"] = page
                 elif only_incomplete:
                     params = {
                         "q": "state:<translated AND (changed:<yesterday OR state:empty)",
                         "page_size": self._incomplete_page_size,
-                        "page": page,
                     }
+                    if page > 0:
+                        params["page"] = page
                 else:
-                    params = {"page_size": 200, "page": page}
+                    params = {"page_size": 200}
+                    if page > 0:
+                        params["page"] = page
 
                 # Make the API request
                 res = self._make_request(endpoint, req_type="get", params=params)

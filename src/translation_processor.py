@@ -50,21 +50,35 @@ class TranslationProcessor:
             if self.weblate_client is None:
                 print("ERROR: self.weblate_client is not set")
                 return
+            last_component = ""
+            last_unit_url = ""
             for component, trans_units, has_more in self.weblate_client.get_translation_units(
                 self.weblate_client.components, only_incomplete=True
             ):
                 print(f"Processing project: {project} and component {component}")
                 if trans_units:
                     self._process_translation(trans_units)
+                    last_component = component
+                    last_unit_url = trans_units[-1]["web_url"]
                 if self.answer_yes and not has_more:
                     # Notify user and ask for user input to continue
                     print("Completed component:", component)
                     # Example review URL:
                     # https://hosted.weblate.org/zen/tor/tor-browser/tb-android/sr/?offset=0&q=state%3Aneeds-editing&sort_by=last_updated&checksum=
-                    base_url = re.sub(r"/translate/", "/zen/", trans_units[-1]["web_url"])
+                    base_url = re.sub(r"/translate/", "/zen/", last_unit_url)
                     base_url = re.sub(r"\?checksum=[a-zA-Z0-9]+", "", base_url)
                     print(f"Review changes at: {base_url}?q=state%3Aneeds-editing&sort_by=last_updated")
                     input("Press enter to continue...")
+                    last_component = last_unit_url = ""
+            if self.answer_yes and last_component and last_unit_url:
+                # Notify user and ask for user input to continue
+                print("Completed component:", last_component)
+                # Example review URL:
+                # https://hosted.weblate.org/zen/tor/tor-browser/tb-android/sr/?offset=0&q=state%3Aneeds-editing&sort_by=last_updated&checksum=
+                base_url = re.sub(r"/translate/", "/zen/", trans_units[-1]["web_url"])
+                base_url = re.sub(r"\?checksum=[a-zA-Z0-9]+", "", base_url)
+                print(f"Review changes at: {base_url}?q=state%3Aneeds-editing&sort_by=last_updated")
+                input("Press enter to continue...")
             self._mark_project_completed(project)
 
     def _project_completed_recently(self, project: str) -> bool:
