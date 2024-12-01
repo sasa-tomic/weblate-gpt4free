@@ -53,6 +53,9 @@ click==8.1.7
     # via duckduckgo-search
     # via flask
     # via uvicorn
+colorama==0.4.6
+    # via click
+    # via tqdm
 cssselect2==0.7.0
     # via cairosvg
 curl-cffi==0.7.3
@@ -73,7 +76,7 @@ flask==3.1.0
 frozenlist==1.5.0
     # via aiohttp
     # via aiosignal
-g4f==0.3.7.6
+g4f==0.3.8.1
 h11==0.14.0
     # via httpcore
     # via uvicorn
@@ -88,8 +91,6 @@ idna==3.10
     # via yarl
 itsdangerous==2.2.0
     # via flask
-jeepney==0.8.0
-    # via browser-cookie3
 jinja2==3.1.4
     # via flask
 jiter==0.8.0
@@ -142,7 +143,7 @@ python-socks==2.5.3
 pyyaml==6.0.2
 requests==2.32.3
     # via g4f
-ruff==0.8.0
+ruff==0.8.1
 setuptools==75.5.0
 sniffio==1.3.1
     # via anyio
