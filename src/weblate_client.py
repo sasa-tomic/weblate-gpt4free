@@ -76,6 +76,11 @@ class WeblateClient:
             components = [c["url"].split("/")[-2] for c in components]
         return components
 
+    def is_component_locked(self, component: str) -> bool:
+        endpoint = f"components/{self.project}/{component}/"
+        response = self._make_request(endpoint)
+        return response["locked"]
+
     def set_incomplete_page_size(self, size: int) -> None:
         print(f"Setting incomplete page size to {size}")
         self._incomplete_page_size = size
@@ -88,6 +93,9 @@ class WeblateClient:
         self, components: list[str], only_translated: bool = False, only_incomplete: bool = False
     ) -> Generator[tuple[str, list[dict], bool], None, None]:
         for component in components:
+            if self.is_component_locked(component):
+                print(f"Component {component} is locked, skipping")
+                continue
             self._incomplete_page_size = self.default_incomplete_page_size
             has_more = True
             page = 0
