@@ -79,7 +79,7 @@ class WeblateClient:
     def is_component_locked(self, component: str) -> bool:
         endpoint = f"components/{self.project}/{component}/"
         response = self._make_request(endpoint)
-        return response["locked"]
+        return response.get("locked", False)
 
     def set_incomplete_page_size(self, size: int) -> None:
         print(f"Setting incomplete page size to {size}")
