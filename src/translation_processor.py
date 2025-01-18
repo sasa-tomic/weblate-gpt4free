@@ -1,6 +1,7 @@
 import datetime
 import re
 import sys
+import time
 
 import editor  # type: ignore
 
@@ -13,6 +14,7 @@ class TranslationProcessor:
     def __init__(
         self,
         weblate_name: str,
+        username: str,
         api_url: str,
         projects: list[str],
         target_lang: str,
@@ -23,6 +25,7 @@ class TranslationProcessor:
         answer_yes: bool,
     ) -> None:
         self.weblate_name = weblate_name
+        self.username = username
         self.api_url = api_url
         self.projects = projects
         self.target_lang = target_lang
@@ -65,7 +68,10 @@ class TranslationProcessor:
                     # https://hosted.weblate.org/zen/tor/tor-browser/tb-android/sr/?offset=0&q=state%3Aneeds-editing&sort_by=last_updated&checksum=
                     base_url = re.sub(r"/translate/", "/zen/", last_unit_url)
                     base_url = re.sub(r"\?checksum=[a-zA-Z0-9]+", "", base_url)
-                    print(f"Review changes at: {base_url}?q=state%3Aneeds-editing&sort_by=-last_updated")
+                    print(
+                        f"Review changes at: {base_url}?q=state%3Aneeds-editing+changed_by%3A{self.username}&sort_by=-last_updated"
+                    )
+                    time.sleep(1)
                     if not has_more:
                         # Notify user and ask for user input to continue
                         print("Completed component:", component)
@@ -78,7 +84,9 @@ class TranslationProcessor:
                 # https://hosted.weblate.org/zen/tor/tor-browser/tb-android/sr/?offset=0&q=state%3Aneeds-editing&sort_by=last_updated&checksum=
                 base_url = re.sub(r"/translate/", "/zen/", last_unit_url)
                 base_url = re.sub(r"\?checksum=[a-zA-Z0-9]+", "", base_url)
-                print(f"Review changes at: {base_url}?q=state%3Aneeds-editing&sort_by=-last_updated")
+                print(
+                    f"Review changes at: {base_url}?q=state%3Aneeds-editing+changed_by%3A{self.username}&sort_by=-last_updated"
+                )
                 input("Press enter to continue...")
             self._mark_project_completed(project)
 

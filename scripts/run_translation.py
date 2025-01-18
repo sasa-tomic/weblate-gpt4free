@@ -36,7 +36,7 @@ def main() -> None:
 
     gpt_provider = config["gpt"]["providers"].get(args.provider)
     if not gpt_provider:
-        print(f"Unknown GPT provider: {args.provider}. Available providers:")	
+        print(f"Unknown GPT provider: {args.provider}. Available providers:")
         for provider in config["gpt"]["providers"]:
             print(provider)
         print()
@@ -66,6 +66,7 @@ def main() -> None:
         )
         processor = TranslationProcessor(
             weblate_name=weblate["name"],
+            username=weblate["username"],
             api_url=weblate["api_url"],
             projects=weblate["projects"],
             target_lang=target_lang,
