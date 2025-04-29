@@ -69,7 +69,7 @@ class TranslationProcessor:
                     base_url = re.sub(r"/translate/", "/zen/", last_unit_url)
                     base_url = re.sub(r"\?checksum=[a-zA-Z0-9]+", "", base_url)
                     print(
-                        f"Review changes at: {base_url}?q=state%3Aneeds-editing+changed_by%3A{self.username}&sort_by=-last_updated"
+                        f"Review changes at: {base_url}?q=state%3Aneeds-editing+AND+changed_by%3A{self.username}&sort_by=-last_updated"
                     )
                     time.sleep(1)
                     if not has_more:
